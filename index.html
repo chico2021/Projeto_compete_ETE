@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>projETE Portfólio - Competições & Equipes</title>
+    <!-- Adicionar Supabase JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        /* Seu CSS existente permanece o mesmo */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -17,7 +20,6 @@
             font-family: Arial, Helvetica, sans-serif;
         }
 
-        /* Center website */
         .main {
             max-width: 1200px;
             margin: auto;
@@ -37,7 +39,6 @@
             color: #333;
         }
 
-        /* Header Styles */
         .header {
             background: white;
             padding: 1rem 0;
@@ -94,7 +95,6 @@
             font-weight: 600;
         }
 
-        /* Login Button */
         .login-btn {
             background: #667eea;
             color: white;
@@ -130,7 +130,6 @@
             font-size: 0.8rem;
         }
 
-        /* Filter Buttons - MELHORADO */
         #myBtnContainer {
             text-align: center;
             margin: 30px 0;
@@ -167,7 +166,6 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
-        /* Novo estilo para o botão do Forms */
         .btn-forms {
             background-color: #28a745;
             color: white;
@@ -193,11 +191,6 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
-        .btn-forms i {
-            font-size: 16px;
-        }
-
-        /* Portfolio Grid */
         .row {
             margin: 8px -16px;
         }
@@ -213,14 +206,12 @@
             display: none;
         }
 
-        /* Clear floats after rows */
         .row:after {
             content: "";
             display: table;
             clear: both;
         }
 
-        /* Content - Cards REDUZIDOS */
         .content {
             background-color: white;
             padding: 12px;
@@ -256,12 +247,10 @@
             font-size: 12px;
         }
 
-        /* The "show" class is added to the filtered elements */
         .show {
             display: block;
         }
 
-        /* Team specific styles - REDUZIDOS */
         .team-members {
             background: #f9f9f9;
             padding: 8px;
@@ -325,7 +314,6 @@
             background: #667eea;
         }
 
-        /* Category badges */
         .category-badge {
             display: inline-block;
             padding: 3px 10px;
@@ -345,7 +333,6 @@
             color: white;
         }
 
-        /* Status badges */
         .status-badge {
             display: inline-block;
             padding: 3px 8px;
@@ -399,7 +386,6 @@
             color: white;
         }
 
-        /* Admin Panel */
         .admin-panel {
             max-width: 900px;
             margin: 2rem auto;
@@ -568,7 +554,6 @@
             font-size: 0.85rem;
         }
 
-        /* Forms preview */
         .forms-preview {
             background: white;
             border-radius: 8px;
@@ -584,7 +569,6 @@
             border-radius: 8px;
         }
 
-        /* Pages */
         .page {
             display: none;
         }
@@ -593,7 +577,6 @@
             display: block;
         }
 
-        /* Loading Spinner */
         .spinner {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #667eea;
@@ -609,7 +592,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -654,7 +636,6 @@
             color: #666;
         }
 
-        /* Login Modal */
         .login-form {
             padding: 1rem 0;
         }
@@ -670,7 +651,6 @@
             text-align: center;
         }
 
-        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 3rem;
@@ -685,7 +665,6 @@
             margin-bottom: 1rem;
         }
 
-        /* Responsive */
         @media screen and (max-width: 992px) {
             .column {
                 width: 50%;
@@ -765,7 +744,7 @@
     <header class="header">
         <div class="header-content">
             <div class="logo">
-                <img src="data:image/jpeg;base64,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" alt="Logo">
+                <img src="data:image/jpeg;base64,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" alt="Logo">
                 <h1>projETE Portfólio</h1>
             </div>
             <nav class="nav-links">
@@ -786,7 +765,7 @@
             <div class="main">
                 <h2>projETE</h2>
                 
-                <!-- Filter Buttons com nova aba Forms -->
+                <!-- Filter Buttons -->
                 <div id="myBtnContainer">
                     <button class="btn active" onclick="filterSelection('all')">Mostrar Tudo</button>
                     <button class="btn" onclick="filterSelection('competition')">Competições & Projetos</button>
@@ -824,7 +803,7 @@
                         <div id="competition-list" class="competition-list"></div>
                     </div>
 
-                    <!-- Tab Equipes - CORRIGIDA -->
+                    <!-- Tab Equipes -->
                     <div id="teams-tab" class="tab-content">
                         <div class="form-group">
                             <label for="team-competition-filter">Filtrar por Competição:</label>
@@ -974,7 +953,6 @@
                     </select>
                 </div>
 
-                <!-- NOVO: Prof Orientador -->
                 <div class="form-group">
                     <label for="team-advisor">Prof Orientador</label>
                     <input type="text" id="team-advisor" required placeholder="Ex: Prof. Carlos Silva">
@@ -1018,79 +996,27 @@
     </div>
 
     <script>
-        // Credenciais de admin
+        // Configuração do Supabase - SUBSTITUA PELOS SEUS DADOS
+        const SUPABASE_URL = 'https://rdrosixecnlnapokkqos.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkcm9zaXhlY25sbmFwb2trcW9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3Mzk4OTksImV4cCI6MjA4ODMxNTg5OX0.Si9KYWpEJ-ojuCeaOYJEVodoDNb3H2fVSb2kauw0JEw';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Credenciais de admin (podem ser verificadas no Supabase também)
         const ADMIN_EMAIL = 'afsantos837@gmail.com';
         const ADMIN_PASSWORD = 'Ch@Verde26';
 
-        // Dados iniciais
-        let competitions = [
-            {
-                id: '1',
-                title: 'Google Code Jam',
-                description: 'Uma das competições de programação mais prestigiadas do mundo.',
-                image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=300',
-                link: 'https://codingcompetitions.withgoogle.com/codejam',
-                status: 'aberta'
-            },
-            {
-                id: '2',
-                title: 'ICPC',
-                description: 'International Collegiate Programming Contest.',
-                image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=300',
-                link: 'https://icpc.global',
-                status: 'aberta'
-            },
-            {
-                id: '3',
-                title: 'Hackathon Brasil',
-                description: 'Maior hackathon do Brasil.',
-                image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=300',
-                link: 'https://hackathonbrasil.com',
-                status: 'fechada'
-            }
-        ];
-
-        let teams = [
-            {
-                id: '1',
-                competitionId: '1',
-                teamName: 'Tech Warriors',
-                projectName: 'Solução de IA para Código',
-                status: 'classificada',
-                advisor: 'Prof. Carlos Silva',
-                image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=300',
-                members: ['Ana Silva', 'Carlos Santos', 'Mariana Oliveira'],
-                videoUrl: 'https://youtube.com/watch?v=exemplo',
-                projectUrl: 'https://github.com/exemplo/projeto',
-                year: '2024',
-                class: '3° Ano A'
-            },
-            {
-                id: '2',
-                competitionId: '1',
-                teamName: 'Code Masters',
-                projectName: 'App de Educação',
-                status: 'venceu',
-                advisor: 'Profa. Ana Beatriz',
-                image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=300',
-                members: ['João Souza', 'Beatriz Lima'],
-                videoUrl: 'https://youtube.com/watch?v=exemplo2',
-                projectUrl: 'https://github.com/exemplo/app',
-                year: '2023',
-                class: '2° Ano B'
-            }
-        ];
-
-        // Dados do Forms
+        // Dados locais (apenas para cache)
+        let competitions = [];
+        let teams = [];
         let formsUrl = '';
 
         let editingCompetitionId = null;
         let editingTeamId = null;
         let isLoggedIn = false;
 
-        // Verificar login
+        // Verificar login (usando sessionStorage apenas para manter a sessão)
         function checkLoginStatus() {
-            const savedLogin = localStorage.getItem('isLoggedIn');
+            const savedLogin = sessionStorage.getItem('isLoggedIn');
             if (savedLogin === 'true') {
                 isLoggedIn = true;
                 updateUIForLogin();
@@ -1134,9 +1060,10 @@
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
 
+            // Aqui você pode implementar autenticação com Supabase posteriormente
             if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
                 isLoggedIn = true;
-                localStorage.setItem('isLoggedIn', 'true');
+                sessionStorage.setItem('isLoggedIn', 'true');
                 updateUIForLogin();
                 closeLoginModal();
                 
@@ -1149,11 +1076,11 @@
 
         function logout() {
             isLoggedIn = false;
-            localStorage.removeItem('isLoggedIn');
+            sessionStorage.removeItem('isLoggedIn');
             updateUIForLogin();
         }
 
-        // Funções de filtro - MELHORADAS
+        // Funções de filtro
         function filterSelection(c) {
             var x, i;
             x = document.getElementsByClassName("column");
@@ -1194,38 +1121,110 @@
             element.className = arr1.join(" ");
         }
 
-        // Carregar dados
-        function loadData() {
-            const savedCompetitions = localStorage.getItem('competitions');
-            const savedTeams = localStorage.getItem('teams');
-            const savedFormsUrl = localStorage.getItem('formsUrl');
+        // Carregar dados do Supabase
+        async function loadData() {
+            showLoading();
             
-            if (savedCompetitions) {
-                competitions = JSON.parse(savedCompetitions);
-            }
-            if (savedTeams) {
-                teams = JSON.parse(savedTeams);
-            }
-            if (savedFormsUrl) {
-                formsUrl = savedFormsUrl;
+            try {
+                // Carregar competições
+                const { data: compData, error: compError } = await supabase
+                    .from('competitions')
+                    .select('*');
+                
+                if (compError) throw compError;
+                competitions = compData || [];
+
+                // Carregar equipes
+                const { data: teamsData, error: teamsError } = await supabase
+                    .from('teams')
+                    .select('*');
+                
+                if (teamsError) throw teamsError;
+                teams = teamsData || [];
+
+                // Carregar forms URL
+                const { data: formsData, error: formsError } = await supabase
+                    .from('settings')
+                    .select('value')
+                    .eq('key', 'formsUrl')
+                    .single();
+                
+                if (formsError && formsError.code !== 'PGRST116') throw formsError;
+                formsUrl = formsData?.value || '';
+                
                 updateFormsLink();
+                
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                alert('Erro ao carregar dados do servidor. Usando dados locais.');
+                
+                // Fallback para dados iniciais se não conseguir carregar
+                competitions = [
+                    {
+                        id: '1',
+                        title: 'Google Code Jam',
+                        description: 'Uma das competições de programação mais prestigiadas do mundo.',
+                        image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=300',
+                        link: 'https://codingcompetitions.withgoogle.com/codejam',
+                        status: 'aberta'
+                    }
+                ];
+                
+                teams = [
+                    {
+                        id: '1',
+                        competitionId: '1',
+                        teamName: 'Tech Warriors',
+                        projectName: 'Solução de IA para Código',
+                        status: 'classificada',
+                        advisor: 'Prof. Carlos Silva',
+                        image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=300',
+                        members: ['Ana Silva', 'Carlos Santos', 'Mariana Oliveira'],
+                        videoUrl: 'https://youtube.com/watch?v=exemplo',
+                        projectUrl: 'https://github.com/exemplo/projeto',
+                        year: '2024',
+                        class: '3° Ano A'
+                    }
+                ];
+            } finally {
+                hideLoading();
+                renderPortfolio();
+                renderAdminCompetitions();
+                renderAdminTeams();
+                renderAdminForms();
+                updateCompetitionSelects();
             }
-            
-            renderPortfolio();
-            renderAdminCompetitions();
-            renderAdminTeams();
-            renderAdminForms();
-            updateCompetitionSelects();
         }
 
-        // Salvar dados
-        function saveData() {
-            localStorage.setItem('competitions', JSON.stringify(competitions));
-            localStorage.setItem('teams', JSON.stringify(teams));
-            renderPortfolio();
-            renderAdminCompetitions();
-            renderAdminTeams();
-            updateCompetitionSelects();
+        // Salvar dados no Supabase
+        async function saveData() {
+            showLoading();
+            
+            try {
+                // Não precisamos salvar tudo de uma vez, as operações individuais já salvam
+                // Esta função pode ser usada para recarregar a interface
+                renderPortfolio();
+                renderAdminCompetitions();
+                renderAdminTeams();
+                updateCompetitionSelects();
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Funções auxiliares de loading
+        function showLoading() {
+            document.getElementById('home-loading').style.display = 'block';
+            document.getElementById('admin-loading').style.display = 'block';
+            document.getElementById('teams-loading').style.display = 'block';
+            document.getElementById('forms-loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('home-loading').style.display = 'none';
+            document.getElementById('admin-loading').style.display = 'none';
+            document.getElementById('teams-loading').style.display = 'none';
+            document.getElementById('forms-loading').style.display = 'none';
         }
 
         // Atualizar link do Forms
@@ -1239,12 +1238,9 @@
             }
         }
 
-        // Renderizar portfólio - CORRIGIDO COM PROF ORIENTADOR
+        // Renderizar portfólio
         function renderPortfolio() {
             const row = document.getElementById('portfolio-row');
-            const loading = document.getElementById('home-loading');
-            
-            loading.style.display = 'none';
             
             let items = [];
 
@@ -1405,9 +1401,6 @@
         // Renderizar admin - competições
         function renderAdminCompetitions() {
             const list = document.getElementById('competition-list');
-            const loading = document.getElementById('admin-loading');
-            
-            loading.style.display = 'none';
 
             if (competitions.length === 0) {
                 list.innerHTML = `
@@ -1439,13 +1432,10 @@
             `).join('');
         }
 
-        // Renderizar admin - equipes (ATUALIZADO COM ORIENTADOR)
+        // Renderizar admin - equipes
         function renderAdminTeams() {
             const list = document.getElementById('teams-list');
-            const loading = document.getElementById('teams-loading');
             const filter = document.getElementById('team-competition-filter').value;
-            
-            loading.style.display = 'none';
 
             let filteredTeams = teams;
             if (filter) {
@@ -1502,11 +1492,8 @@
         // Renderizar admin - forms
         function renderAdminForms() {
             const list = document.getElementById('forms-list');
-            const loading = document.getElementById('forms-loading');
             const preview = document.getElementById('forms-preview');
             const previewIframe = document.getElementById('forms-preview-iframe');
-            
-            loading.style.display = 'none';
 
             document.getElementById('forms-url').value = formsUrl;
 
@@ -1538,28 +1525,57 @@
             }
         }
 
-        // Salvar URL do Forms
-        function saveFormsUrl() {
+        // Salvar URL do Forms no Supabase
+        async function saveFormsUrl() {
             const url = document.getElementById('forms-url').value;
-            if (url) {
+            if (!url) {
+                alert('Por favor, insira uma URL válida.');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                const { error } = await supabase
+                    .from('settings')
+                    .upsert({ key: 'formsUrl', value: url }, { onConflict: 'key' });
+
+                if (error) throw error;
+
                 formsUrl = url;
-                localStorage.setItem('formsUrl', formsUrl);
                 updateFormsLink();
                 renderAdminForms();
                 alert('Link do Forms salvo com sucesso!');
-            } else {
-                alert('Por favor, insira uma URL válida.');
+            } catch (error) {
+                console.error('Erro ao salvar forms:', error);
+                alert('Erro ao salvar link do Forms. Tente novamente.');
+            } finally {
+                hideLoading();
             }
         }
 
         // Limpar URL do Forms
-        function clearFormsUrl() {
-            if (confirm('Tem certeza que deseja remover o link do Forms?')) {
+        async function clearFormsUrl() {
+            if (!confirm('Tem certeza que deseja remover o link do Forms?')) return;
+
+            showLoading();
+            
+            try {
+                const { error } = await supabase
+                    .from('settings')
+                    .upsert({ key: 'formsUrl', value: '' }, { onConflict: 'key' });
+
+                if (error) throw error;
+
                 formsUrl = '';
-                localStorage.removeItem('formsUrl');
                 document.getElementById('forms-url').value = '';
                 updateFormsLink();
                 renderAdminForms();
+            } catch (error) {
+                console.error('Erro ao remover forms:', error);
+                alert('Erro ao remover link do Forms. Tente novamente.');
+            } finally {
+                hideLoading();
             }
         }
 
@@ -1584,8 +1600,13 @@
             document.getElementById('competition-modal').classList.remove('active');
         }
 
-        function handleCompetitionSubmit(event) {
+        async function handleCompetitionSubmit(event) {
             event.preventDefault();
+
+            if (!isLoggedIn) {
+                alert('Você precisa estar logado!');
+                return;
+            }
 
             const competitionData = {
                 id: editingCompetitionId || Date.now().toString(),
@@ -1596,20 +1617,45 @@
                 status: document.getElementById('comp-status').value
             };
 
-            if (editingCompetitionId) {
-                const index = competitions.findIndex(c => c.id === editingCompetitionId);
-                if (index !== -1) {
-                    competitions[index] = competitionData;
-                }
-            } else {
-                competitions.push(competitionData);
-            }
+            showLoading();
 
-            saveData();
-            closeCompetitionModal();
+            try {
+                if (editingCompetitionId) {
+                    // Atualizar competição existente
+                    const { error } = await supabase
+                        .from('competitions')
+                        .update(competitionData)
+                        .eq('id', editingCompetitionId);
+
+                    if (error) throw error;
+
+                    // Atualizar cache local
+                    const index = competitions.findIndex(c => c.id === editingCompetitionId);
+                    if (index !== -1) {
+                        competitions[index] = competitionData;
+                    }
+                } else {
+                    // Inserir nova competição
+                    const { error } = await supabase
+                        .from('competitions')
+                        .insert(competitionData);
+
+                    if (error) throw error;
+
+                    competitions.push(competitionData);
+                }
+
+                closeCompetitionModal();
+                await saveData();
+            } catch (error) {
+                console.error('Erro ao salvar competição:', error);
+                alert('Erro ao salvar competição. Tente novamente.');
+            } finally {
+                hideLoading();
+            }
         }
 
-        function editCompetition(id) {
+        async function editCompetition(id) {
             const competition = competitions.find(c => c.id === id);
             if (competition) {
                 editingCompetitionId = id;
@@ -1624,15 +1670,38 @@
             }
         }
 
-        function deleteCompetition(id) {
-            if (confirm('Tem certeza que deseja excluir esta competição? As equipes relacionadas também serão excluídas.')) {
+        async function deleteCompetition(id) {
+            if (!isLoggedIn) {
+                alert('Você precisa estar logado!');
+                return;
+            }
+
+            if (!confirm('Tem certeza que deseja excluir esta competição? As equipes relacionadas também serão excluídas.')) return;
+
+            showLoading();
+
+            try {
+                // As equipes serão excluídas automaticamente devido ao ON DELETE CASCADE
+                const { error } = await supabase
+                    .from('competitions')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
                 competitions = competitions.filter(c => c.id !== id);
                 teams = teams.filter(t => t.competitionId !== id);
-                saveData();
+                
+                await saveData();
+            } catch (error) {
+                console.error('Erro ao excluir competição:', error);
+                alert('Erro ao excluir competição. Tente novamente.');
+            } finally {
+                hideLoading();
             }
         }
 
-        // Modal de Equipe - ATUALIZADO
+        // Modal de Equipe
         function openTeamModal() {
             if (!isLoggedIn) {
                 alert('Você precisa estar logado!');
@@ -1659,42 +1728,91 @@
             document.getElementById('team-modal').classList.remove('active');
         }
 
-        function handleTeamSubmit(event) {
+        async function handleTeamSubmit(event) {
             event.preventDefault();
+
+            if (!isLoggedIn) {
+                alert('Você precisa estar logado!');
+                return;
+            }
 
             const membersText = document.getElementById('team-members').value;
             const membersArray = membersText ? membersText.split('\n').filter(m => m.trim() !== '') : [];
             const competitionId = document.getElementById('team-competition').value;
 
+            if (!competitionId) {
+                alert('Selecione uma competição!');
+                return;
+            }
+
             const teamData = {
                 id: editingTeamId || Date.now().toString(),
-                competitionId: competitionId,
-                teamName: document.getElementById('team-name').value,
-                projectName: document.getElementById('team-project').value,
+                competition_id: competitionId,
+                team_name: document.getElementById('team-name').value,
+                project_name: document.getElementById('team-project').value,
                 status: document.getElementById('team-status').value,
                 advisor: document.getElementById('team-advisor').value,
                 image: document.getElementById('team-image').value || null,
                 members: membersArray,
-                videoUrl: document.getElementById('team-video-url').value || null,
-                projectUrl: document.getElementById('team-project-url').value || null,
+                video_url: document.getElementById('team-video-url').value || null,
+                project_url: document.getElementById('team-project-url').value || null,
                 year: document.getElementById('team-year').value,
                 class: document.getElementById('team-class').value
             };
 
-            if (editingTeamId) {
-                const index = teams.findIndex(t => t.id === editingTeamId);
-                if (index !== -1) {
-                    teams[index] = teamData;
-                }
-            } else {
-                teams.push(teamData);
-            }
+            showLoading();
 
-            saveData();
-            closeTeamModal();
+            try {
+                if (editingTeamId) {
+                    // Atualizar equipe existente
+                    const { error } = await supabase
+                        .from('teams')
+                        .update(teamData)
+                        .eq('id', editingTeamId);
+
+                    if (error) throw error;
+
+                    // Atualizar cache local
+                    const index = teams.findIndex(t => t.id === editingTeamId);
+                    if (index !== -1) {
+                        teams[index] = {
+                            ...teamData,
+                            competitionId: teamData.competition_id,
+                            teamName: teamData.team_name,
+                            projectName: teamData.project_name,
+                            videoUrl: teamData.video_url,
+                            projectUrl: teamData.project_url
+                        };
+                    }
+                } else {
+                    // Inserir nova equipe
+                    const { error } = await supabase
+                        .from('teams')
+                        .insert(teamData);
+
+                    if (error) throw error;
+
+                    teams.push({
+                        ...teamData,
+                        competitionId: teamData.competition_id,
+                        teamName: teamData.team_name,
+                        projectName: teamData.project_name,
+                        videoUrl: teamData.video_url,
+                        projectUrl: teamData.project_url
+                    });
+                }
+
+                closeTeamModal();
+                await saveData();
+            } catch (error) {
+                console.error('Erro ao salvar equipe:', error);
+                alert('Erro ao salvar equipe. Tente novamente.');
+            } finally {
+                hideLoading();
+            }
         }
 
-        function editTeam(id) {
+        async function editTeam(id) {
             const team = teams.find(t => t.id === id);
             if (team) {
                 editingTeamId = id;
@@ -1715,11 +1833,34 @@
             }
         }
 
-        function deleteTeam(id) {
+        async function deleteTeam(id) {
+            if (!isLoggedIn) {
+                alert('Você precisa estar logado!');
+                return;
+            }
+
             const team = teams.find(t => t.id === id);
-            if (team && confirm('Tem certeza que deseja excluir esta equipe?')) {
+            if (!team) return;
+
+            if (!confirm('Tem certeza que deseja excluir esta equipe?')) return;
+
+            showLoading();
+
+            try {
+                const { error } = await supabase
+                    .from('teams')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
                 teams = teams.filter(t => t.id !== id);
-                saveData();
+                await saveData();
+            } catch (error) {
+                console.error('Erro ao excluir equipe:', error);
+                alert('Erro ao excluir equipe. Tente novamente.');
+            } finally {
+                hideLoading();
             }
         }
 
