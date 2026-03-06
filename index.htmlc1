@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>projETE Portfólio - Competições & Equipes</title>
+    <!-- Adicionar Supabase JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Seu CSS existente permanece o mesmo */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #f1f1f1;
+            padding: 20px;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .main {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        h1 {
+            font-size: 50px;
+            word-break: break-all;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 40px;
+            text-align: center;
+            margin: 30px 0;
+            color: #333;
+        }
+
+        .header {
+            background: white;
+            padding: 1rem 0;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            margin: 0;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #666;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .nav-links a:hover {
+            color: #667eea;
+        }
+
+        .nav-links a.active {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .login-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .login-btn:hover {
+            background: #764ba2;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-email {
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        #myBtnContainer {
+            text-align: center;
+            margin: 30px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .btn {
+            border: none;
+            outline: none;
+            padding: 12px 20px;
+            background-color: white;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 0 3px;
+            border-radius: 4px;
+            transition: all 0.3s;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .btn:hover {
+            background-color: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn.active {
+            background-color: #667eea;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn-forms {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            outline: none;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 0 3px;
+            border-radius: 4px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .btn-forms:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .row {
+            margin: 8px -16px;
+        }
+
+        .row,
+        .row > .column {
+            padding: 8px;
+        }
+
+        .column {
+            float: left;
+            width: 33.33%;
+            display: none;
+        }
+
+        .row:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .content {
+            background-color: white;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            height: 100%;
+            font-size: 13px;
+        }
+
+        .content:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .content img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .content h4 {
+            margin: 10px 0 5px 0;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .content p {
+            color: #666;
+            line-height: 1.4;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .show {
+            display: block;
+        }
+
+        .team-members {
+            background: #f9f9f9;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 8px 0;
+            font-size: 0.8rem;
+        }
+
+        .team-members strong {
+            display: block;
+            margin-bottom: 3px;
+            color: #333;
+            font-size: 0.85rem;
+        }
+
+        .portfolio-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            margin: 8px 0;
+        }
+
+        .tag {
+            background: #f0f0f0;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            color: #666;
+        }
+
+        .portfolio-links {
+            display: flex;
+            gap: 5px;
+            margin-top: 8px;
+        }
+
+        .portfolio-link {
+            flex: 1;
+            text-align: center;
+            padding: 6px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.75rem;
+            color: white;
+            transition: opacity 0.3s;
+        }
+
+        .portfolio-link:hover {
+            opacity: 0.9;
+        }
+
+        .portfolio-link.video {
+            background: #dc3545;
+        }
+
+        .portfolio-link.project {
+            background: #28a745;
+        }
+
+        .portfolio-link.competition {
+            background: #667eea;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 16px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            margin: 8px 0 3px 0;
+        }
+
+        .category-badge.competition {
+            background: #667eea;
+            color: white;
+        }
+
+        .category-badge.team {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            margin-left: 5px;
+        }
+
+        .status-badge.aberta {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-badge.fechada {
+            background: #dc3545;
+            color: white;
+        }
+
+        .team-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            margin: 5px 0;
+        }
+
+        .team-status.inscrita {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .team-status.classificada {
+            background: #28a745;
+            color: white;
+        }
+
+        .team-status.participando {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .team-status.eliminada {
+            background: #dc3545;
+            color: white;
+        }
+
+        .team-status.venceu {
+            background: #6610f2;
+            color: white;
+        }
+
+        .admin-panel {
+            max-width: 900px;
+            margin: 2rem auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .admin-title {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .admin-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 1rem;
+        }
+
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: #764ba2;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .btn-edit {
+            background: #ffc107;
+            color: #333;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .competition-list, .teams-list, .forms-list {
+            margin-top: 2rem;
+        }
+
+        .competition-item, .team-item, .form-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            background: #f9f9f9;
+        }
+
+        .competition-info, .team-info, .form-info {
+            flex: 1;
+        }
+
+        .competition-info h3, .team-info h3, .form-info h3 {
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .competition-info p, .team-info p, .form-info p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .competition-actions, .team-actions, .form-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .team-links-info {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .team-links-info a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+
+        .forms-preview {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .forms-preview iframe {
+            width: 100%;
+            height: 500px;
+            border: none;
+            border-radius: 8px;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-header h2 {
+            color: #333;
+        }
+
+        .modal-close {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .login-form {
+            padding: 1rem 0;
+        }
+
+        .login-form .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .login-error {
+            color: #dc3545;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+            background: white;
+            border-radius: 10px;
+            grid-column: 1 / -1;
+        }
+
+        .empty-state p {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        @media screen and (max-width: 992px) {
+            .column {
+                width: 50%;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .column {
+                width: 100%;
+            }
+            
+            .btn, .btn-forms {
+                width: 100%;
+                margin: 5px 0;
+                font-size: 14px;
+                padding: 12px;
+                justify-content: center;
+            }
+
+            #myBtnContainer {
+                flex-direction: column;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 1rem;
+            }
+
+            .admin-tabs {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                width: 100%;
+            }
+
+            .competition-item, .team-item, .form-item {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .competition-actions, .team-actions, .form-actions {
+                margin-top: 10px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            h2 {
+                font-size: 30px;
+            }
+
+            .content img {
+                height: 120px;
+            }
+
+            .portfolio-links {
+                flex-direction: column;
+            }
+
+            .modal-content {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="data:image/jpeg;base64,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" alt="Logo">
+                <h1>projETE Portfólio</h1>
+            </div>
+            <nav class="nav-links">
+                <a onclick="showPage('home')" class="active" id="nav-home">Home</a>
+                <a onclick="showPage('admin')" id="nav-admin" style="display: none;">Admin</a>
+                <div id="user-info" style="display: none;" class="user-info">
+                    <span class="user-email" id="user-email"></span>
+                    <button onclick="logout()" class="logout-btn">Sair</button>
+                </div>
+                <button onclick="openLoginModal()" class="login-btn" id="login-btn">Login</button>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Página Home -->
+        <div id="home-page" class="page active">
+            <div class="main">
+                <h2>projETE</h2>
+                
+                <!-- Filter Buttons -->
+                <div id="myBtnContainer">
+                    <button class="btn active" onclick="filterSelection('all')">Mostrar Tudo</button>
+                    <button class="btn" onclick="filterSelection('competition')">Competições & Projetos</button>
+                    <button class="btn" onclick="filterSelection('team')">Times</button>
+                    <a href="#" id="forms-link" class="btn-forms" target="_blank" style="display: none;">
+                        <span>📝</span> Inscrever Projeto
+                    </a>
+                </div>
+
+                <div id="home-loading" class="spinner"></div>
+                
+                <!-- Portfolio Gallery Grid -->
+                <div class="row" id="portfolio-row"></div>
+            </div>
+        </div>
+
+        <!-- Página Admin -->
+        <div id="admin-page" class="page">
+            <div class="main">
+                <div class="admin-panel">
+                    <h1 class="admin-title">Painel Administrativo</h1>
+                    
+                    <div class="admin-tabs">
+                        <button class="tab-btn active" onclick="showAdminTab('competitions')">Competições</button>
+                        <button class="tab-btn" onclick="showAdminTab('teams')">Equipes</button>
+                        <button class="tab-btn" onclick="showAdminTab('forms')">Forms</button>
+                    </div>
+
+                    <!-- Tab Competições -->
+                    <div id="competitions-tab" class="tab-content active">
+                        <button onclick="openCompetitionModal()" class="btn-primary" style="width: 100%; margin-bottom: 2rem;">
+                            + Adicionar Nova Competição
+                        </button>
+                        <div id="admin-loading" class="spinner"></div>
+                        <div id="competition-list" class="competition-list"></div>
+                    </div>
+
+                    <!-- Tab Equipes -->
+                    <div id="teams-tab" class="tab-content">
+                        <div class="form-group">
+                            <label for="team-competition-filter">Filtrar por Competição:</label>
+                            <select id="team-competition-filter" onchange="filterTeamsByCompetition()">
+                                <option value="">Todas as Competições</option>
+                            </select>
+                        </div>
+                        <button onclick="openTeamModal()" class="btn-primary" style="width: 100%; margin-bottom: 2rem;">
+                            + Adicionar Nova Equipe
+                        </button>
+                        <div id="teams-loading" class="spinner"></div>
+                        <div id="teams-list" class="teams-list"></div>
+                    </div>
+
+                    <!-- Tab Forms -->
+                    <div id="forms-tab" class="tab-content">
+                        <div class="form-group">
+                            <label for="forms-url">URL do Google Forms</label>
+                            <input type="url" id="forms-url" placeholder="https://docs.google.com/forms/...">
+                        </div>
+                        <button onclick="saveFormsUrl()" class="btn-success" style="width: 100%; margin-bottom: 2rem;">
+                            Salvar Link do Forms
+                        </button>
+                        
+                        <div id="forms-loading" class="spinner"></div>
+                        <div id="forms-list" class="forms-list"></div>
+                        
+                        <!-- Preview do Forms -->
+                        <div id="forms-preview" class="forms-preview" style="display: none;">
+                            <h3>Prévia do Forms</h3>
+                            <iframe id="forms-preview-iframe" src=""></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modais -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Login</h2>
+                <span class="modal-close" onclick="closeLoginModal()">&times;</span>
+            </div>
+            
+            <div class="login-form">
+                <div class="form-group">
+                    <label for="login-email">E-mail</label>
+                    <input type="email" id="login-email" placeholder="email@exemplo.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="login-password">Senha</label>
+                    <input type="password" id="login-password" placeholder="********">
+                </div>
+
+                <div id="login-error" class="login-error"></div>
+
+                <button onclick="handleLogin()" class="btn-primary" style="width: 100%;">
+                    Entrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="competition-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="competition-modal-title">Adicionar Competição</h2>
+                <span class="modal-close" onclick="closeCompetitionModal()">&times;</span>
+            </div>
+            
+            <form id="competition-form" onsubmit="handleCompetitionSubmit(event)">
+                <input type="hidden" id="competition-id">
+                
+                <div class="form-group">
+                    <label for="comp-title">Título da Competição</label>
+                    <input type="text" id="comp-title" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="comp-description">Descrição</label>
+                    <textarea id="comp-description" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="comp-image">URL da Imagem</label>
+                    <input type="url" id="comp-image" required placeholder="https://exemplo.com/imagem.jpg">
+                </div>
+
+                <div class="form-group">
+                    <label for="comp-link">Link da Competição</label>
+                    <input type="url" id="comp-link" required placeholder="https://exemplo.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="comp-status">Status da Competição</label>
+                    <select id="comp-status" required>
+                        <option value="aberta">Aberta</option>
+                        <option value="fechada">Fechada</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width: 100%;">
+                    Salvar Competição
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="team-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="team-modal-title">Adicionar Equipe</h2>
+                <span class="modal-close" onclick="closeTeamModal()">&times;</span>
+            </div>
+            
+            <form id="team-form" onsubmit="handleTeamSubmit(event)">
+                <input type="hidden" id="team-id">
+                
+                <div class="form-group">
+                    <label for="team-competition">Competição</label>
+                    <select id="team-competition" required>
+                        <option value="">Selecione uma competição</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="team-name">Nome da Equipe</label>
+                    <input type="text" id="team-name" required placeholder="Ex: Tech Warriors">
+                </div>
+
+                <div class="form-group">
+                    <label for="team-project">Nome do Projeto</label>
+                    <input type="text" id="team-project" required placeholder="Ex: Solução de IA para Educação">
+                </div>
+
+                <div class="form-group">
+                    <label for="team-status">Status na Competição</label>
+                    <select id="team-status" required>
+                        <option value="inscrita">Inscrita</option>
+                        <option value="classificada">Classificada</option>
+                        <option value="participando">Participando</option>
+                        <option value="eliminada">Eliminada</option>
+                        <option value="venceu">Venceu</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="team-advisor">Prof Orientador</label>
+                    <input type="text" id="team-advisor" required placeholder="Ex: Prof. Carlos Silva">
+                </div>
+
+                <div class="form-group">
+                    <label for="team-image">URL da Foto do Grupo</label>
+                    <input type="url" id="team-image" placeholder="https://exemplo.com/foto-grupo.jpg">
+                </div>
+
+                <div class="form-group">
+                    <label for="team-members">Nomes dos Integrantes (um por linha)</label>
+                    <textarea id="team-members" placeholder="João Silva&#10;Maria Santos&#10;Pedro Oliveira"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="team-video-url">URL do Vídeo do Projeto</label>
+                    <input type="url" id="team-video-url" placeholder="https://youtube.com/...">
+                </div>
+
+                <div class="form-group">
+                    <label for="team-project-url">URL do Projeto</label>
+                    <input type="url" id="team-project-url" placeholder="https://github.com/...">
+                </div>
+
+                <div class="form-group">
+                    <label for="team-year">Ano</label>
+                    <input type="number" id="team-year" min="2020" max="2026" value="2024" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="team-class">Turma</label>
+                    <input type="text" id="team-class" placeholder="Ex: 3° Ano A" required>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width: 100%;">
+                    Salvar Equipe
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Configuração do Supabase - SUBSTITUA PELOS SEUS DADOS
+        const SUPABASE_URL = 'https://rdrosixecnlnapokkqos.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkcm9zaXhlY25sbmFwb2trcW9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3Mzk4OTksImV4cCI6MjA4ODMxNTg5OX0.Si9KYWpEJ-ojuCeaOYJEVodoDNb3H2fVSb2kauw0JEw';
+         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Credenciais de admin (podem ser verificadas no Supabase também)
+        const ADMIN_EMAIL = 'afsantos837@gmail.com';
+        const ADMIN_PASSWORD = 'Ch@Verde26';
+
+        // Dados locais (apenas para cache)
+        let competitions = [];
+        let teams = [];
+        let formsUrl = '';
+
+        let editingCompetitionId = null;
+        let editingTeamId = null;
+        let isLoggedIn = false;
+
+        // Verificar login (usando sessionStorage apenas para manter a sessão)
+        function checkLoginStatus() {
+            const savedLogin = sessionStorage.getItem('isLoggedIn');
+            if (savedLogin === 'true') {
+                isLoggedIn = true;
+                updateUIForLogin();
+            }
+        }
+
+        // Atualizar UI baseado no login
+        function updateUIForLogin() {
+            const adminLink = document.getElementById('nav-admin');
+            const loginBtn = document.getElementById('login-btn');
+            const userInfo = document.getElementById('user-info');
+            const userEmail = document.getElementById('user-email');
+
+            if (isLoggedIn) {
+                adminLink.style.display = 'inline';
+                loginBtn.style.display = 'none';
+                userInfo.style.display = 'flex';
+                userEmail.textContent = ADMIN_EMAIL;
+            } else {
+                adminLink.style.display = 'none';
+                loginBtn.style.display = 'inline';
+                userInfo.style.display = 'none';
+                
+                if (document.getElementById('admin-page').classList.contains('active')) {
+                    showPage('home');
+                }
+            }
+        }
+
+        // Funções de Login
+        function openLoginModal() {
+            document.getElementById('login-modal').classList.add('active');
+            document.getElementById('login-error').textContent = '';
+        }
+
+        function closeLoginModal() {
+            document.getElementById('login-modal').classList.remove('active');
+        }
+
+        function handleLogin() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            // Aqui você pode implementar autenticação com Supabase posteriormente
+            if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+                isLoggedIn = true;
+                sessionStorage.setItem('isLoggedIn', 'true');
+                updateUIForLogin();
+                closeLoginModal();
+                
+                document.getElementById('login-email').value = '';
+                document.getElementById('login-password').value = '';
+            } else {
+                document.getElementById('login-error').textContent = 'E-mail ou senha incorretos!';
+            }
+        }
+
+        function logout() {
+            isLoggedIn = false;
+            sessionStorage.removeItem('isLoggedIn');
+            updateUIForLogin();
+        }
+
+        // Funções de filtro
+        function filterSelection(c) {
+            var x, i;
+            x = document.getElementsByClassName("column");
+            if (c == "all") c = "";
+            for (i = 0; i < x.length; i++) {
+                w3RemoveClass(x[i], "show");
+                if (x[i].className.indexOf(c) > -1) w3AddClass(x[i], "show");
+            }
+            
+            // Atualizar botões ativos
+            var btns = document.getElementById("myBtnContainer").getElementsByClassName("btn");
+            for (i = 0; i < btns.length; i++) {
+                btns[i].classList.remove("active");
+            }
+            event.target.classList.add("active");
+        }
+
+        function w3AddClass(element, name) {
+            var i, arr1, arr2;
+            arr1 = element.className.split(" ");
+            arr2 = name.split(" ");
+            for (i = 0; i < arr2.length; i++) {
+                if (arr1.indexOf(arr2[i]) == -1) {
+                    element.className += " " + arr2[i];
+                }
+            }
+        }
+
+        function w3RemoveClass(element, name) {
+            var i, arr1, arr2;
+            arr1 = element.className.split(" ");
+            arr2 = name.split(" ");
+            for (i = 0; i < arr2.length; i++) {
+                while (arr1.indexOf(arr2[i]) > -1) {
+                    arr1.splice(arr1.indexOf(arr2[i]), 1);
+                }
+            }
+            element.className = arr1.join(" ");
+        }
+
+        // Carregar dados do Supabase
+        async function loadData() {
+            showLoading();
+            
+            try {
+                // Carregar competições
+                const { data: compData, error: compError } = await supabase
+                    .from('competitions')
+                    .select('*');
+                
+                if (compError) throw compError;
+                competitions = compData || [];
+
+                // Carregar equipes
+                const { data: teamsData, error: teamsError } = await supabase
+                    .from('teams')
+                    .select('*');
+                
+                if (teamsError) throw teamsError;
+                teams = teamsData || [];
+
+                // Carregar forms URL
+                const { data: formsData, error: formsError } = await supabase
+                    .from('settings')
+                    .select('value')
+                    .eq('key', 'formsUrl')
+                    .single();
+                
+                if (formsError && formsError.code !== 'PGRST116') throw formsError;
+                formsUrl = formsData?.value || '';
+                
+                updateFormsLink();
+                
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                alert('Erro ao carregar dados do servidor. Usando dados locais.');
+                
+                // Fallback para dados iniciais se não conseguir carregar
+                competitions = [
+                    {
+                        id: '1',
+                        title: 'Google Code Jam',
+                        description: 'Uma das competições de programação mais prestigiadas do mundo.',
+                        image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=300',
+                        link: 'https://codingcompetitions.withgoogle.com/codejam',
+                        status: 'aberta'
+                    }
+                ];
+                
+                teams = [
+                    {
+                        id: '1',
+                        competitionId: '1',
+                        teamName: 'Tech Warriors',
+                        projectName: 'Solução de IA para Código',
+                        status: 'classificada',
+                        advisor: 'Prof. Carlos Silva',
+                        image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=300',
+                        members: ['Ana Silva', 'Carlos Santos', 'Mariana Oliveira'],
+                        videoUrl: 'https://youtube.com/watch?v=exemplo',
+                        projectUrl: 'https://github.com/exemplo/projeto',
+                        year: '2024',
+                        class: '3° Ano A'
+                    }
+                ];
+            } finally {
+                hideLoading();
+                renderPortfolio();
+                renderAdminCompetitions();
+                renderAdminTeams();
+                renderAdminForms();
+                updateCompetitionSelects();
+            }
+        }
+
+        // Salvar dados no Supabase
+        async function saveData() {
+            showLoading();
+            
+            try {
+                // Não precisamos salvar tudo de uma vez, as operações individuais já salvam
+                // Esta função pode ser usada para recarregar a interface
+                renderPortfolio();
+                renderAdminCompetitions();
+                renderAdminTeams();
+                updateCompetitionSelects();
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Funções auxiliares de loading
+        function showLoading() {
+            document.getElementById('home-loading').style.display = 'block';
+            document.getElementById('admin-loading').style.display = 'block';
+            document.getElementById('teams-loading').style.display = 'block';
+            document.getElementById('forms-loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('home-loading').style.display = 'none';
+            document.getElementById('admin-loading').style.display = 'none';
+            document.getElementById('teams-loading').style.display = 'none';
+            document.getElementById('forms-loading').style.display = 'none';
+        }
+
+        // Atualizar link do Forms
+        function updateFormsLink() {
+            const formsLink = document.getElementById('forms-link');
+            if (formsUrl) {
+                formsLink.href = formsUrl;
+                formsLink.style.display = 'inline-flex';
+            } else {
+                formsLink.style.display = 'none';
+            }
+        }
+
+        // Renderizar portfólio
+        function renderPortfolio() {
+            const row = document.getElementById('portfolio-row');
+            
+            let items = [];
+
+            // Adicionar competições
+            competitions.forEach(comp => {
+                items.push({
+                    type: 'competition',
+                    id: comp.id,
+                    title: comp.title,
+                    description: comp.description,
+                    image: comp.image,
+                    link: comp.link,
+                    status: comp.status
+                });
+            });
+
+            // Adicionar equipes
+            teams.forEach(team => {
+                const competition = competitions.find(c => c.id === team.competitionId);
+                items.push({
+                    type: 'team',
+                    id: team.id,
+                    teamName: team.teamName,
+                    projectName: team.projectName,
+                    status: team.status,
+                    advisor: team.advisor,
+                    image: team.image,
+                    competition: competition,
+                    members: team.members,
+                    year: team.year,
+                    class: team.class,
+                    videoUrl: team.videoUrl,
+                    projectUrl: team.projectUrl
+                });
+            });
+
+            if (items.length === 0) {
+                row.innerHTML = `
+                    <div class="empty-state">
+                        <p>Nenhum item cadastrado ainda.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Gerar HTML do grid
+            row.innerHTML = items.map(item => {
+                if (item.type === 'competition') {
+                    const statusClass = item.status === 'aberta' ? 'aberta' : 'fechada';
+                    const statusText = item.status === 'aberta' ? '✅ Aberta' : '🔒 Fechada';
+                    
+                    return `
+                        <div class="column competition">
+                            <div class="content">
+                                <img src="${item.image}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/300x200?text=Imagem+não+disponível'">
+                                <span class="category-badge competition">🏆 Competição</span>
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                                <h4>${item.title}</h4>
+                                <p>${item.description}</p>
+                                <div class="portfolio-links">
+                                    <a href="${item.link}" target="_blank" class="portfolio-link competition">🔗 Site Oficial</a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const statusMap = {
+                        'inscrita': '📝 Inscrita',
+                        'classificada': '✅ Classificada',
+                        'participando': '⚡ Participando',
+                        'eliminada': '❌ Eliminada',
+                        'venceu': '🏆 Venceu'
+                    };
+                    
+                    return `
+                        <div class="column team">
+                            <div class="content">
+                                <img src="${item.image || 'https://via.placeholder.com/300x200?text=Sem+foto'}" alt="${item.teamName}" onerror="this.src='https://via.placeholder.com/300x200?text=Sem+foto'">
+                                <span class="category-badge team">👥 Equipe</span>
+                                <span class="team-status ${item.status}">${statusMap[item.status]}</span>
+                                <h4>${item.teamName}</h4>
+                                <p><strong>Projeto:</strong> ${item.projectName}</p>
+                                <p><strong>Competição:</strong> ${item.competition ? item.competition.title : 'Não especificada'}</p>
+                                <p><strong>Orientador:</strong> ${item.advisor || 'Não informado'}</p>
+                                <div class="team-members">
+                                    <strong>Integrantes:</strong>
+                                    ${item.members ? item.members.join('<br>') : 'Não informado'}
+                                </div>
+                                <div class="portfolio-tags">
+                                    <span class="tag">📅 ${item.year}</span>
+                                    <span class="tag">📚 ${item.class}</span>
+                                </div>
+                                <div class="portfolio-links">
+                                    ${item.videoUrl ? `<a href="${item.videoUrl}" target="_blank" class="portfolio-link video">🎥 Vídeo</a>` : ''}
+                                    ${item.projectUrl ? `<a href="${item.projectUrl}" target="_blank" class="portfolio-link project">📁 Projeto</a>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+
+            // Aplicar filtro inicial
+            filterSelection('all');
+        }
+
+        // Mostrar página
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(`${page}-page`).classList.add('active');
+            
+            document.querySelectorAll('.nav-links a').forEach(link => link.classList.remove('active'));
+            document.getElementById(`nav-${page}`).classList.add('active');
+
+            if (page === 'home') {
+                renderPortfolio();
+            }
+        }
+
+        // Mostrar tabs do admin
+        function showAdminTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            if (tab === 'competitions') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                document.getElementById('competitions-tab').classList.add('active');
+            } else if (tab === 'teams') {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('teams-tab').classList.add('active');
+            } else if (tab === 'forms') {
+                document.querySelectorAll('.tab-btn')[2].classList.add('active');
+                document.getElementById('forms-tab').classList.add('active');
+                renderAdminForms();
+            }
+        }
+
+        // Atualizar selects de competição
+        function updateCompetitionSelects() {
+            const select = document.getElementById('team-competition');
+            if (select) {
+                select.innerHTML = '<option value="">Selecione uma competição</option>' +
+                    competitions.map(comp => `<option value="${comp.id}">${comp.title}</option>`).join('');
+            }
+
+            const filterSelect = document.getElementById('team-competition-filter');
+            if (filterSelect) {
+                filterSelect.innerHTML = '<option value="">Todas as Competições</option>' +
+                    competitions.map(comp => `<option value="${comp.id}">${comp.title}</option>`).join('');
+            }
+        }
+
+        // Filtrar equipes por competição
+        function filterTeamsByCompetition() {
+            renderAdminTeams();
+        }
+
+        // Renderizar admin - competições
+        function renderAdminCompetitions() {
+            const list = document.getElementById('competition-list');
+
+            if (competitions.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <p>Nenhuma competição cadastrada.</p>
+                        <p>Clique em "Adicionar Nova Competição" para começar.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = competitions.map(comp => `
+                <div class="competition-item">
+                    <div class="competition-info">
+                        <h3>${comp.title} ${comp.status === 'aberta' ? '✅' : '🔒'}</h3>
+                        <p>${comp.description}</p>
+                        <p><strong>Status:</strong> ${comp.status === 'aberta' ? 'Aberta' : 'Fechada'}</p>
+                        <small><a href="${comp.link}" target="_blank">${comp.link}</a></small>
+                    </div>
+                    <div class="competition-actions">
+                        <button onclick="editCompetition('${comp.id}')" class="btn-edit">
+                            Editar
+                        </button>
+                        <button onclick="deleteCompetition('${comp.id}')" class="btn-danger">
+                            Excluir
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Renderizar admin - equipes
+        function renderAdminTeams() {
+            const list = document.getElementById('teams-list');
+            const filter = document.getElementById('team-competition-filter').value;
+
+            let filteredTeams = teams;
+            if (filter) {
+                filteredTeams = teams.filter(t => t.competitionId === filter);
+            }
+
+            if (filteredTeams.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <p>Nenhuma equipe cadastrada.</p>
+                        <p>Clique em "Adicionar Nova Equipe" para começar.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = filteredTeams.map(team => {
+                const competition = competitions.find(c => c.id === team.competitionId);
+                const statusMap = {
+                    'inscrita': 'Inscrita',
+                    'classificada': 'Classificada',
+                    'participando': 'Participando',
+                    'eliminada': 'Eliminada',
+                    'venceu': 'Venceu'
+                };
+                return `
+                    <div class="team-item">
+                        <div class="team-info">
+                            <h3>${team.teamName}</h3>
+                            <p><strong>Projeto:</strong> ${team.projectName}</p>
+                            <p><strong>Competição:</strong> ${competition ? competition.title : 'Competição não encontrada'}</p>
+                            <p><strong>Status:</strong> ${statusMap[team.status]}</p>
+                            <p><strong>Orientador:</strong> ${team.advisor || 'Não informado'}</p>
+                            <p><strong>Integrantes:</strong> ${team.members ? team.members.join(', ') : 'Não informado'}</p>
+                            <p><strong>Ano/Turma:</strong> ${team.year} - ${team.class}</p>
+                            <div class="team-links-info">
+                                ${team.videoUrl ? `<a href="${team.videoUrl}" target="_blank">🎥 Vídeo</a>` : ''}
+                                ${team.projectUrl ? `<a href="${team.projectUrl}" target="_blank">📁 Projeto</a>` : ''}
+                            </div>
+                        </div>
+                        <div class="team-actions">
+                            <button onclick="editTeam('${team.id}')" class="btn-edit">
+                                Editar
+                            </button>
+                            <button onclick="deleteTeam('${team.id}')" class="btn-danger">
+                                Excluir
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Renderizar admin - forms
+        function renderAdminForms() {
+            const list = document.getElementById('forms-list');
+            const preview = document.getElementById('forms-preview');
+            const previewIframe = document.getElementById('forms-preview-iframe');
+
+            document.getElementById('forms-url').value = formsUrl;
+
+            if (formsUrl) {
+                preview.style.display = 'block';
+                previewIframe.src = formsUrl;
+                
+                list.innerHTML = `
+                    <div class="form-item">
+                        <div class="form-info">
+                            <h3>Google Forms Ativo</h3>
+                            <p><strong>URL:</strong> <a href="${formsUrl}" target="_blank">${formsUrl}</a></p>
+                        </div>
+                        <div class="form-actions">
+                            <button onclick="clearFormsUrl()" class="btn-danger">
+                                Remover
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                preview.style.display = 'none';
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <p>Nenhum formulário configurado.</p>
+                        <p>Cole a URL do Google Forms acima e clique em "Salvar Link do Forms".</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Salvar URL do Forms no Supabase
+        async function saveFormsUrl() {
+            const url = document.getElementById('forms-url').value;
+            if (!url) {
+                alert('Por favor, insira uma URL válida.');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                const { error } = await supabase
+                    .from('settings')
+                    .upsert({ key: 'formsUrl', value: url }, { onConflict: 'key' });
+
+                if (error) throw error;
+
+                formsUrl = url;
+                updateFormsLink();
+                renderAdminForms();
+                alert('Link do Forms salvo com sucesso!');
+            } catch (error) {
+                console.error('Erro ao salvar forms:', error);
+                alert('Erro ao salvar link do Forms. Tente novamente.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Limpar URL do Forms
+        async function clearFormsUrl() {
+            if (!confirm('Tem certeza que deseja remover o link do Forms?')) return;
+
+            showLoading();
+            
+            try {
+                const { error } = await supabase
+                    .from('settings')
+                    .upsert({ key: 'formsUrl', value: '' }, { onConflict: 'key' });
+
+                if (error) throw error;
+
+                formsUrl = '';
+                document.getElementById('forms-url').value = '';
+                updateFormsLink();
+                renderAdminForms();
+            } catch (error) {
+                console.error('Erro ao remover forms:', error);
+                alert('Erro ao remover link do Forms. Tente novamente.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Modal de Competição
+        function openCompetitionModal() {
+            if (!isLoggedIn) {
+                alert('Você precisa estar logado!');
+                return;
+            }
+            editingCompetitionId = null;
+            document.getElementById('competition-modal-title').textContent = 'Adicionar Competição';
+            document.getElementById('competition-id').value = '';
+            document.getElementById('comp-title').value = '';
+            document.getElementById('comp-description').value = '';
+            document.getElementById('comp-image').value = '';
+            document.getElementById('comp-link').value = '';
+            document.getElementById('comp-status').value = 'aberta';
+            document.getElementById('competition-modal').classList.add('active');
+        }
+
+        function closeCompetitionModal() {
+            document.getElementById('competition-modal').classList.remove('active');
+        }
+
+        async function handleCompetitionSubmit(event) {
+            event.preventDefault();
+
+            if (!isLoggedIn) {
+                alert('Você precisa estar logado!');
+                return;
+            }
+
+            const competitionData = {
+                id: editingCompetitionId || Date.now().toString(),
+                title: document.getElementById('comp-title').value,
+                description: document.getElementById('comp-description').value,
+                image: document.getElementById('comp-image').value,
+                link: document.getElementById('comp-link').value,
+                status: document.getElementById('comp-status').value
+            };
+
+            showLoading();
+
+            try {
+                if (editingCompetitionId) {
+                    // Atualizar competição existente
+                    const { error } = await supabase
+                        .from('competitions')
+                        .update(competitionData)
+                        .eq('id', editingCompetitionId);
+
+                    if (error) throw error;
+
+                    // Atualizar cache local
+                    const index = competitions.findIndex(c => c.id === editingCompetitionId);
+                    if (index !== -1) {
+                        competitions[index] = competitionData;
+                    }
+                } else {
+                    // Inserir nova competição
+                    const { error } = await supabase
+                        .from('competitions')
+                        .insert(competitionData);
+
+                    if (error) throw error;
+
+                    competitions.push(competitionData);
+                }
+
+                closeCompetitionModal();
+                await saveData();
+            } catch (error) {
+                console.error('Erro ao salvar competição:', error);
+                alert('Erro ao salvar competição. Tente novamente.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function editCompetition(id) {
+            const competition = competitions.find(c => c.id === id);
+            if (competition) {
+                editingCompetitionId = id;
+                document.getElementById('competition-modal-title').textContent = 'Editar Competição';
+                document.getElementById('competition-id').value = competition.id;
+                document.getElementById('comp-title').value = competition.title;
+                document.getElementById('comp-description').value = competition.description;
+                document.getElementById('comp-image').value = competition.image;
+                document.getElementById('comp-link').value = competition.link;
+                document.getElementById('comp-status').value = competition.status;
+                document.getElementById('competition-modal').classList.add('active');
+            }
+        }
+
+        async function deleteCompetition(id) {
+            if (!isLoggedIn) {
+                alert('Você precisa estar logado!');
+                return;
+            }
+
+            if (!confirm('Tem certeza que deseja excluir esta competição? As equipes relacionadas também serão excluídas.')) return;
+
+            showLoading();
+
+            try {
+                // As equipes serão excluídas automaticamente devido ao ON DELETE CASCADE
+                const { error } = await supabase
+                    .from('competitions')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                competitions = competitions.filter(c => c.id !== id);
+                teams = teams.filter(t => t.competitionId !== id);
+                
+                await saveData();
+            } catch (error) {
+                console.error('Erro ao excluir competição:', error);
+                alert('Erro ao excluir competição. Tente novamente.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Modal de Equipe
+        function openTeamModal() {
+            if (!isLoggedIn) {
+                alert('Você precisa estar logado!');
+                return;
+            }
+            editingTeamId = null;
+            document.getElementById('team-modal-title').textContent = 'Adicionar Equipe';
+            document.getElementById('team-id').value = '';
+            document.getElementById('team-competition').value = '';
+            document.getElementById('team-name').value = '';
+            document.getElementById('team-project').value = '';
+            document.getElementById('team-status').value = 'inscrita';
+            document.getElementById('team-advisor').value = '';
+            document.getElementById('team-image').value = '';
+            document.getElementById('team-members').value = '';
+            document.getElementById('team-video-url').value = '';
+            document.getElementById('team-project-url').value = '';
+            document.getElementById('team-year').value = '2024';
+            document.getElementById('team-class').value = '';
+            document.getElementById('team-modal').classList.add('active');
+        }
+
+        function closeTeamModal() {
+            document.getElementById('team-modal').classList.remove('active');
+        }
+
+        async function handleTeamSubmit(event) {
+            event.preventDefault();
+
+            if (!isLoggedIn) {
+                alert('Você precisa estar logado!');
+                return;
+            }
+
+            const membersText = document.getElementById('team-members').value;
+            const membersArray = membersText ? membersText.split('\n').filter(m => m.trim() !== '') : [];
+            const competitionId = document.getElementById('team-competition').value;
+
+            if (!competitionId) {
+                alert('Selecione uma competição!');
+                return;
+            }
+
+            const teamData = {
+                id: editingTeamId || Date.now().toString(),
+                competition_id: competitionId,
+                team_name: document.getElementById('team-name').value,
+                project_name: document.getElementById('team-project').value,
+                status: document.getElementById('team-status').value,
+                advisor: document.getElementById('team-advisor').value,
+                image: document.getElementById('team-image').value || null,
+                members: membersArray,
+                video_url: document.getElementById('team-video-url').value || null,
+                project_url: document.getElementById('team-project-url').value || null,
+                year: document.getElementById('team-year').value,
+                class: document.getElementById('team-class').value
+            };
+
+            showLoading();
+
+            try {
+                if (editingTeamId) {
+                    // Atualizar equipe existente
+                    const { error } = await supabase
+                        .from('teams')
+                        .update(teamData)
+                        .eq('id', editingTeamId);
+
+                    if (error) throw error;
+
+                    // Atualizar cache local
+                    const index = teams.findIndex(t => t.id === editingTeamId);
+                    if (index !== -1) {
+                        teams[index] = {
+                            ...teamData,
+                            competitionId: teamData.competition_id,
+                            teamName: teamData.team_name,
+                            projectName: teamData.project_name,
+                            videoUrl: teamData.video_url,
+                            projectUrl: teamData.project_url
+                        };
+                    }
+                } else {
+                    // Inserir nova equipe
+                    const { error } = await supabase
+                        .from('teams')
+                        .insert(teamData);
+
+                    if (error) throw error;
+
+                    teams.push({
+                        ...teamData,
+                        competitionId: teamData.competition_id,
+                        teamName: teamData.team_name,
+                        projectName: teamData.project_name,
+                        videoUrl: teamData.video_url,
+                        projectUrl: teamData.project_url
+                    });
+                }
+
+                closeTeamModal();
+                await saveData();
+            } catch (error) {
+                console.error('Erro ao salvar equipe:', error);
+                alert('Erro ao salvar equipe. Tente novamente.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function editTeam(id) {
+            const team = teams.find(t => t.id === id);
+            if (team) {
+                editingTeamId = id;
+                document.getElementById('team-modal-title').textContent = 'Editar Equipe';
+                document.getElementById('team-id').value = team.id;
+                document.getElementById('team-competition').value = team.competitionId;
+                document.getElementById('team-name').value = team.teamName;
+                document.getElementById('team-project').value = team.projectName;
+                document.getElementById('team-status').value = team.status;
+                document.getElementById('team-advisor').value = team.advisor || '';
+                document.getElementById('team-image').value = team.image || '';
+                document.getElementById('team-members').value = team.members ? team.members.join('\n') : '';
+                document.getElementById('team-video-url').value = team.videoUrl || '';
+                document.getElementById('team-project-url').value = team.projectUrl || '';
+                document.getElementById('team-year').value = team.year;
+                document.getElementById('team-class').value = team.class;
+                document.getElementById('team-modal').classList.add('active');
+            }
+        }
+
+        async function deleteTeam(id) {
+            if (!isLoggedIn) {
+                alert('Você precisa estar logado!');
+                return;
+            }
+
+            const team = teams.find(t => t.id === id);
+            if (!team) return;
+
+            if (!confirm('Tem certeza que deseja excluir esta equipe?')) return;
+
+            showLoading();
+
+            try {
+                const { error } = await supabase
+                    .from('teams')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                teams = teams.filter(t => t.id !== id);
+                await saveData();
+            } catch (error) {
+                console.error('Erro ao excluir equipe:', error);
+                alert('Erro ao excluir equipe. Tente novamente.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            checkLoginStatus();
+            loadData();
+            
+            window.onclick = function(event) {
+                const modals = ['competition-modal', 'team-modal', 'login-modal'];
+                modals.forEach(modalId => {
+                    const modal = document.getElementById(modalId);
+                    if (event.target === modal) {
+                        if (modalId === 'competition-modal') closeCompetitionModal();
+                        if (modalId === 'team-modal') closeTeamModal();
+                        if (modalId === 'login-modal') closeLoginModal();
+                    }
+                });
+            };
+        });
+    </script>
+</body>
+</html>
