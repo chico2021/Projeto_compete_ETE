@@ -314,6 +314,10 @@
             background: #667eea;
         }
 
+        .portfolio-link.material {
+            background: #ff9800;
+        }
+
         .category-badge {
             display: inline-block;
             padding: 3px 10px;
@@ -508,11 +512,25 @@
             background: #218838;
         }
 
-        .competition-list, .teams-list, .forms-list {
+        .btn-warning {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .btn-warning:hover {
+            background: #f57c00;
+        }
+
+        .competition-list, .teams-list, .forms-list, .materials-list {
             margin-top: 2rem;
         }
 
-        .competition-item, .team-item, .form-item {
+        .competition-item, .team-item, .form-item, .material-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -523,21 +541,21 @@
             background: #f9f9f9;
         }
 
-        .competition-info, .team-info, .form-info {
+        .competition-info, .team-info, .form-info, .material-info {
             flex: 1;
         }
 
-        .competition-info h3, .team-info h3, .form-info h3 {
+        .competition-info h3, .team-info h3, .form-info h3, .material-info h3 {
             color: #333;
             margin-bottom: 0.25rem;
         }
 
-        .competition-info p, .team-info p, .form-info p {
+        .competition-info p, .team-info p, .form-info p, .material-info p {
             color: #666;
             font-size: 0.9rem;
         }
 
-        .competition-actions, .team-actions, .form-actions {
+        .competition-actions, .team-actions, .form-actions, .material-actions {
             display: flex;
             gap: 0.5rem;
         }
@@ -707,12 +725,12 @@
                 width: 100%;
             }
 
-            .competition-item, .team-item, .form-item {
+            .competition-item, .team-item, .form-item, .material-item {
                 flex-direction: column;
                 text-align: center;
             }
 
-            .competition-actions, .team-actions, .form-actions {
+            .competition-actions, .team-actions, .form-actions, .material-actions {
                 margin-top: 10px;
             }
         }
@@ -791,6 +809,7 @@
                     <div class="admin-tabs">
                         <button class="tab-btn active" onclick="showAdminTab('competitions')">Competições</button>
                         <button class="tab-btn" onclick="showAdminTab('teams')">Equipes</button>
+                        <button class="tab-btn" onclick="showAdminTab('materials')">Materiais de Apoio</button>
                         <button class="tab-btn" onclick="showAdminTab('forms')">Forms</button>
                     </div>
 
@@ -816,6 +835,21 @@
                         </button>
                         <div id="teams-loading" class="spinner"></div>
                         <div id="teams-list" class="teams-list"></div>
+                    </div>
+
+                    <!-- NOVA Tab Materiais de Apoio -->
+                    <div id="materials-tab" class="tab-content">
+                        <div class="form-group">
+                            <label for="material-competition-filter">Filtrar por Competição:</label>
+                            <select id="material-competition-filter" onchange="filterMaterialsByCompetition()">
+                                <option value="">Todas as Competições</option>
+                            </select>
+                        </div>
+                        <button onclick="openMaterialModal()" class="btn-warning" style="width: 100%; margin-bottom: 2rem;">
+                            + Adicionar Novo Material de Apoio
+                        </button>
+                        <div id="materials-loading" class="spinner"></div>
+                        <div id="materials-list" class="materials-list"></div>
                     </div>
 
                     <!-- Tab Forms -->
@@ -915,6 +949,57 @@
         </div>
     </div>
 
+    <!-- NOVO Modal para Material de Apoio -->
+    <div id="material-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="material-modal-title">Adicionar Material de Apoio</h2>
+                <span class="modal-close" onclick="closeMaterialModal()">&times;</span>
+            </div>
+            
+            <form id="material-form" onsubmit="handleMaterialSubmit(event)">
+                <input type="hidden" id="material-id">
+                
+                <div class="form-group">
+                    <label for="material-competition">Competição Relacionada</label>
+                    <select id="material-competition" required>
+                        <option value="">Selecione uma competição</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="material-title">Título do Material</label>
+                    <input type="text" id="material-title" required placeholder="Ex: Guia de Programação - Google Code Jam">
+                </div>
+
+                <div class="form-group">
+                    <label for="material-description">Descrição</label>
+                    <textarea id="material-description" required placeholder="Breve descrição do material de apoio..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="material-type">Tipo de Material</label>
+                    <select id="material-type" required>
+                        <option value="pdf">PDF - Documento</option>
+                        <option value="video">Vídeo - Tutorial</option>
+                        <option value="link">Link - Site/Artigo</option>
+                        <option value="presentation">Apresentação</option>
+                        <option value="code">Código - Exemplo</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="material-url">URL do Material</label>
+                    <input type="url" id="material-url" required placeholder="https://exemplo.com/material.pdf">
+                </div>
+
+                <button type="submit" class="btn-warning" style="width: 100%;">
+                    Salvar Material de Apoio
+                </button>
+            </form>
+        </div>
+    </div>
+
     <div id="team-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -996,22 +1081,24 @@
     </div>
 
     <script>
-        // Configuração do Supabase - SUBSTITUA PELOS SEUS DADOS
+        // Configuração do Supabase
         const SUPABASE_URL = 'https://rdrosixecnlnapokkqos.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkcm9zaXhlY25sbmFwb2trcW9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3Mzk4OTksImV4cCI6MjA4ODMxNTg5OX0.Si9KYWpEJ-ojuCeaOYJEVodoDNb3H2fVSb2kauw0JEw';
-         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Credenciais de admin (podem ser verificadas no Supabase também)
+        // Credenciais de admin
         const ADMIN_EMAIL = 'afsantos837@gmail.com';
         const ADMIN_PASSWORD = 'Ch@Verde26';
 
         // Dados locais (apenas para cache)
         let competitions = [];
         let teams = [];
+        let materials = []; // NOVO
         let formsUrl = '';
 
         let editingCompetitionId = null;
         let editingTeamId = null;
+        let editingMaterialId = null; // NOVO
         let isLoggedIn = false;
 
         // Verificar login (usando sessionStorage apenas para manter a sessão)
@@ -1060,7 +1147,6 @@
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
 
-            // Aqui você pode implementar autenticação com Supabase posteriormente
             if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
                 isLoggedIn = true;
                 sessionStorage.setItem('isLoggedIn', 'true');
@@ -1142,6 +1228,14 @@
                 if (teamsError) throw teamsError;
                 teams = teamsData || [];
 
+                // NOVO: Carregar materiais
+                const { data: materialsData, error: materialsError } = await supabase
+                    .from('materials')
+                    .select('*');
+                
+                if (materialsError) throw materialsError;
+                materials = materialsData || [];
+
                 // Carregar forms URL
                 const { data: formsData, error: formsError } = await supabase
                     .from('settings')
@@ -1158,7 +1252,7 @@
                 console.error('Erro ao carregar dados:', error);
                 alert('Erro ao carregar dados do servidor. Usando dados locais.');
                 
-                // Fallback para dados iniciais se não conseguir carregar
+                // Fallback para dados iniciais
                 competitions = [
                     {
                         id: '1',
@@ -1186,13 +1280,26 @@
                         class: '3° Ano A'
                     }
                 ];
+
+                materials = [
+                    {
+                        id: '1',
+                        competitionId: '1',
+                        title: 'Guia Completo - Google Code Jam',
+                        description: 'Material com dicas e estratégias para participar do Google Code Jam',
+                        type: 'pdf',
+                        url: 'https://example.com/guia-codejam.pdf'
+                    }
+                ];
             } finally {
                 hideLoading();
                 renderPortfolio();
                 renderAdminCompetitions();
                 renderAdminTeams();
+                renderAdminMaterials(); // NOVO
                 renderAdminForms();
                 updateCompetitionSelects();
+                updateMaterialCompetitionSelects(); // NOVO
             }
         }
 
@@ -1201,12 +1308,12 @@
             showLoading();
             
             try {
-                // Não precisamos salvar tudo de uma vez, as operações individuais já salvam
-                // Esta função pode ser usada para recarregar a interface
                 renderPortfolio();
                 renderAdminCompetitions();
                 renderAdminTeams();
+                renderAdminMaterials(); // NOVO
                 updateCompetitionSelects();
+                updateMaterialCompetitionSelects(); // NOVO
             } finally {
                 hideLoading();
             }
@@ -1217,6 +1324,7 @@
             document.getElementById('home-loading').style.display = 'block';
             document.getElementById('admin-loading').style.display = 'block';
             document.getElementById('teams-loading').style.display = 'block';
+            document.getElementById('materials-loading').style.display = 'block';
             document.getElementById('forms-loading').style.display = 'block';
         }
 
@@ -1224,6 +1332,7 @@
             document.getElementById('home-loading').style.display = 'none';
             document.getElementById('admin-loading').style.display = 'none';
             document.getElementById('teams-loading').style.display = 'none';
+            document.getElementById('materials-loading').style.display = 'none';
             document.getElementById('forms-loading').style.display = 'none';
         }
 
@@ -1238,7 +1347,7 @@
             }
         }
 
-        // Renderizar portfólio
+        // Renderizar portfólio - ATUALIZADO para incluir materiais
         function renderPortfolio() {
             const row = document.getElementById('portfolio-row');
             
@@ -1277,6 +1386,20 @@
                 });
             });
 
+            // Adicionar materiais de apoio (como itens separados ou vinculados)
+            materials.forEach(material => {
+                const competition = competitions.find(c => c.id === material.competitionId);
+                items.push({
+                    type: 'material',
+                    id: material.id,
+                    title: material.title,
+                    description: material.description,
+                    type: material.type,
+                    url: material.url,
+                    competition: competition
+                });
+            });
+
             if (items.length === 0) {
                 row.innerHTML = `
                     <div class="empty-state">
@@ -1306,7 +1429,7 @@
                             </div>
                         </div>
                     `;
-                } else {
+                } else if (item.type === 'team') {
                     const statusMap = {
                         'inscrita': '📝 Inscrita',
                         'classificada': '✅ Classificada',
@@ -1336,6 +1459,32 @@
                                 <div class="portfolio-links">
                                     ${item.videoUrl ? `<a href="${item.videoUrl}" target="_blank" class="portfolio-link video">🎥 Vídeo</a>` : ''}
                                     ${item.projectUrl ? `<a href="${item.projectUrl}" target="_blank" class="portfolio-link project">📁 Projeto</a>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Material de apoio
+                    const typeIcons = {
+                        'pdf': '📄',
+                        'video': '🎥',
+                        'link': '🔗',
+                        'presentation': '📊',
+                        'code': '💻'
+                    };
+                    
+                    return `
+                        <div class="column material">
+                            <div class="content">
+                                <span class="category-badge material">📚 Material de Apoio</span>
+                                <h4>${item.title}</h4>
+                                <p><strong>Competição:</strong> ${item.competition ? item.competition.title : 'Geral'}</p>
+                                <p>${item.description}</p>
+                                <div class="portfolio-tags">
+                                    <span class="tag">${typeIcons[item.type] || '📁'} ${item.type.toUpperCase()}</span>
+                                </div>
+                                <div class="portfolio-links">
+                                    <a href="${item.url}" target="_blank" class="portfolio-link material">📥 Acessar Material</a>
                                 </div>
                             </div>
                         </div>
@@ -1371,8 +1520,12 @@
             } else if (tab === 'teams') {
                 document.querySelectorAll('.tab-btn')[1].classList.add('active');
                 document.getElementById('teams-tab').classList.add('active');
-            } else if (tab === 'forms') {
+            } else if (tab === 'materials') {
                 document.querySelectorAll('.tab-btn')[2].classList.add('active');
+                document.getElementById('materials-tab').classList.add('active');
+                renderAdminMaterials();
+            } else if (tab === 'forms') {
+                document.querySelectorAll('.tab-btn')[3].classList.add('active');
                 document.getElementById('forms-tab').classList.add('active');
                 renderAdminForms();
             }
@@ -1393,9 +1546,29 @@
             }
         }
 
+        // NOVO: Atualizar selects de competição para materiais
+        function updateMaterialCompetitionSelects() {
+            const select = document.getElementById('material-competition');
+            if (select) {
+                select.innerHTML = '<option value="">Selecione uma competição</option>' +
+                    competitions.map(comp => `<option value="${comp.id}">${comp.title}</option>`).join('');
+            }
+
+            const filterSelect = document.getElementById('material-competition-filter');
+            if (filterSelect) {
+                filterSelect.innerHTML = '<option value="">Todas as Competições</option>' +
+                    competitions.map(comp => `<option value="${comp.id}">${comp.title}</option>`).join('');
+            }
+        }
+
         // Filtrar equipes por competição
         function filterTeamsByCompetition() {
             renderAdminTeams();
+        }
+
+        // NOVO: Filtrar materiais por competição
+        function filterMaterialsByCompetition() {
+            renderAdminMaterials();
         }
 
         // Renderizar admin - competições
@@ -1481,6 +1654,58 @@
                                 Editar
                             </button>
                             <button onclick="deleteTeam('${team.id}')" class="btn-danger">
+                                Excluir
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // NOVO: Renderizar admin - materiais
+        function renderAdminMaterials() {
+            const list = document.getElementById('materials-list');
+            const filter = document.getElementById('material-competition-filter').value;
+
+            let filteredMaterials = materials;
+            if (filter) {
+                filteredMaterials = materials.filter(m => m.competitionId === filter);
+            }
+
+            if (filteredMaterials.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <p>Nenhum material de apoio cadastrado.</p>
+                        <p>Clique em "Adicionar Novo Material de Apoio" para começar.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const typeNames = {
+                'pdf': 'PDF - Documento',
+                'video': 'Vídeo - Tutorial',
+                'link': 'Link - Site/Artigo',
+                'presentation': 'Apresentação',
+                'code': 'Código - Exemplo'
+            };
+
+            list.innerHTML = filteredMaterials.map(material => {
+                const competition = competitions.find(c => c.id === material.competitionId);
+                return `
+                    <div class="material-item">
+                        <div class="material-info">
+                            <h3>${material.title}</h3>
+                            <p><strong>Competição:</strong> ${competition ? competition.title : 'Competição não encontrada'}</p>
+                            <p><strong>Tipo:</strong> ${typeNames[material.type] || material.type}</p>
+                            <p><strong>Descrição:</strong> ${material.description}</p>
+                            <small><a href="${material.url}" target="_blank">${material.url}</a></small>
+                        </div>
+                        <div class="material-actions">
+                            <button onclick="editMaterial('${material.id}')" class="btn-edit">
+                                Editar
+                            </button>
+                            <button onclick="deleteMaterial('${material.id}')" class="btn-danger">
                                 Excluir
                             </button>
                         </div>
@@ -1621,7 +1846,6 @@
 
             try {
                 if (editingCompetitionId) {
-                    // Atualizar competição existente
                     const { error } = await supabase
                         .from('competitions')
                         .update(competitionData)
@@ -1629,13 +1853,11 @@
 
                     if (error) throw error;
 
-                    // Atualizar cache local
                     const index = competitions.findIndex(c => c.id === editingCompetitionId);
                     if (index !== -1) {
                         competitions[index] = competitionData;
                     }
                 } else {
-                    // Inserir nova competição
                     const { error } = await supabase
                         .from('competitions')
                         .insert(competitionData);
@@ -1647,6 +1869,7 @@
 
                 closeCompetitionModal();
                 await saveData();
+                updateMaterialCompetitionSelects(); // Atualizar selects de materiais
             } catch (error) {
                 console.error('Erro ao salvar competição:', error);
                 alert('Erro ao salvar competição. Tente novamente.');
@@ -1676,12 +1899,11 @@
                 return;
             }
 
-            if (!confirm('Tem certeza que deseja excluir esta competição? As equipes relacionadas também serão excluídas.')) return;
+            if (!confirm('Tem certeza que deseja excluir esta competição? As equipes e materiais relacionados também serão excluídos.')) return;
 
             showLoading();
 
             try {
-                // As equipes serão excluídas automaticamente devido ao ON DELETE CASCADE
                 const { error } = await supabase
                     .from('competitions')
                     .delete()
@@ -1691,11 +1913,136 @@
 
                 competitions = competitions.filter(c => c.id !== id);
                 teams = teams.filter(t => t.competitionId !== id);
+                materials = materials.filter(m => m.competitionId !== id);
                 
                 await saveData();
+                updateMaterialCompetitionSelects();
             } catch (error) {
                 console.error('Erro ao excluir competição:', error);
                 alert('Erro ao excluir competição. Tente novamente.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // NOVO: Modal de Material
+        function openMaterialModal() {
+            if (!isLoggedIn) {
+                alert('Você precisa estar logado!');
+                return;
+            }
+            editingMaterialId = null;
+            document.getElementById('material-modal-title').textContent = 'Adicionar Material de Apoio';
+            document.getElementById('material-id').value = '';
+            document.getElementById('material-competition').value = '';
+            document.getElementById('material-title').value = '';
+            document.getElementById('material-description').value = '';
+            document.getElementById('material-type').value = 'pdf';
+            document.getElementById('material-url').value = '';
+            document.getElementById('material-modal').classList.add('active');
+        }
+
+        function closeMaterialModal() {
+            document.getElementById('material-modal').classList.remove('active');
+        }
+
+        async function handleMaterialSubmit(event) {
+            event.preventDefault();
+
+            if (!isLoggedIn) {
+                alert('Você precisa estar logado!');
+                return;
+            }
+
+            const competitionId = document.getElementById('material-competition').value;
+
+            if (!competitionId) {
+                alert('Selecione uma competição!');
+                return;
+            }
+
+            const materialData = {
+                id: editingMaterialId || Date.now().toString(),
+                competitionId: competitionId,
+                title: document.getElementById('material-title').value,
+                description: document.getElementById('material-description').value,
+                type: document.getElementById('material-type').value,
+                url: document.getElementById('material-url').value
+            };
+
+            showLoading();
+
+            try {
+                if (editingMaterialId) {
+                    const { error } = await supabase
+                        .from('materials')
+                        .update(materialData)
+                        .eq('id', editingMaterialId);
+
+                    if (error) throw error;
+
+                    const index = materials.findIndex(m => m.id === editingMaterialId);
+                    if (index !== -1) {
+                        materials[index] = materialData;
+                    }
+                } else {
+                    const { error } = await supabase
+                        .from('materials')
+                        .insert(materialData);
+
+                    if (error) throw error;
+
+                    materials.push(materialData);
+                }
+
+                closeMaterialModal();
+                await saveData();
+            } catch (error) {
+                console.error('Erro ao salvar material:', error);
+                alert('Erro ao salvar material. Tente novamente.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function editMaterial(id) {
+            const material = materials.find(m => m.id === id);
+            if (material) {
+                editingMaterialId = id;
+                document.getElementById('material-modal-title').textContent = 'Editar Material de Apoio';
+                document.getElementById('material-id').value = material.id;
+                document.getElementById('material-competition').value = material.competitionId;
+                document.getElementById('material-title').value = material.title;
+                document.getElementById('material-description').value = material.description;
+                document.getElementById('material-type').value = material.type;
+                document.getElementById('material-url').value = material.url;
+                document.getElementById('material-modal').classList.add('active');
+            }
+        }
+
+        async function deleteMaterial(id) {
+            if (!isLoggedIn) {
+                alert('Você precisa estar logado!');
+                return;
+            }
+
+            if (!confirm('Tem certeza que deseja excluir este material?')) return;
+
+            showLoading();
+
+            try {
+                const { error } = await supabase
+                    .from('materials')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                materials = materials.filter(m => m.id !== id);
+                await saveData();
+            } catch (error) {
+                console.error('Erro ao excluir material:', error);
+                alert('Erro ao excluir material. Tente novamente.');
             } finally {
                 hideLoading();
             }
@@ -1747,15 +2094,15 @@
 
             const teamData = {
                 id: editingTeamId || Date.now().toString(),
-                competition_id: competitionId,
-                team_name: document.getElementById('team-name').value,
-                project_name: document.getElementById('team-project').value,
+                competitionId: competitionId,
+                teamName: document.getElementById('team-name').value,
+                projectName: document.getElementById('team-project').value,
                 status: document.getElementById('team-status').value,
                 advisor: document.getElementById('team-advisor').value,
                 image: document.getElementById('team-image').value || null,
                 members: membersArray,
-                video_url: document.getElementById('team-video-url').value || null,
-                project_url: document.getElementById('team-project-url').value || null,
+                videoUrl: document.getElementById('team-video-url').value || null,
+                projectUrl: document.getElementById('team-project-url').value || null,
                 year: document.getElementById('team-year').value,
                 class: document.getElementById('team-class').value
             };
@@ -1764,7 +2111,6 @@
 
             try {
                 if (editingTeamId) {
-                    // Atualizar equipe existente
                     const { error } = await supabase
                         .from('teams')
                         .update(teamData)
@@ -1772,34 +2118,18 @@
 
                     if (error) throw error;
 
-                    // Atualizar cache local
                     const index = teams.findIndex(t => t.id === editingTeamId);
                     if (index !== -1) {
-                        teams[index] = {
-                            ...teamData,
-                            competitionId: teamData.competition_id,
-                            teamName: teamData.team_name,
-                            projectName: teamData.project_name,
-                            videoUrl: teamData.video_url,
-                            projectUrl: teamData.project_url
-                        };
+                        teams[index] = teamData;
                     }
                 } else {
-                    // Inserir nova equipe
                     const { error } = await supabase
                         .from('teams')
                         .insert(teamData);
 
                     if (error) throw error;
 
-                    teams.push({
-                        ...teamData,
-                        competitionId: teamData.competition_id,
-                        teamName: teamData.team_name,
-                        projectName: teamData.project_name,
-                        videoUrl: teamData.video_url,
-                        projectUrl: teamData.project_url
-                    });
+                    teams.push(teamData);
                 }
 
                 closeTeamModal();
@@ -1870,12 +2200,13 @@
             loadData();
             
             window.onclick = function(event) {
-                const modals = ['competition-modal', 'team-modal', 'login-modal'];
+                const modals = ['competition-modal', 'team-modal', 'material-modal', 'login-modal'];
                 modals.forEach(modalId => {
                     const modal = document.getElementById(modalId);
                     if (event.target === modal) {
                         if (modalId === 'competition-modal') closeCompetitionModal();
                         if (modalId === 'team-modal') closeTeamModal();
+                        if (modalId === 'material-modal') closeMaterialModal();
                         if (modalId === 'login-modal') closeLoginModal();
                     }
                 });
