@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>projETE Portfólio - Competições & Equipes</title>
-    <!-- Adicionar Supabase JavaScript -->
+    <!-- Adicionar Supabase JavaScript com tratamento de erro -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* Seu CSS existente permanece o mesmo */
@@ -1089,47 +1089,76 @@
     </div>
 
     <script>
-        // Configuração do Supabase
+        // Configuração do Supabase com timeout e retry
         const SUPABASE_URL = 'https://rdrosixecnlnapokkqos.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkcm9zaXhlY25sbmFwb2trcW9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3Mzk4OTksImV4cCI6MjA4ODMxNTg5OX0.Si9KYWpEJ-ojuCeaOYJEVodoDNb3H2fVSb2kauw0JEw';
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let supabase;
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                auth: {
+                    persistSession: false
+                }
+            });
+        } catch (error) {
+            console.error('Erro ao criar cliente Supabase:', error);
+        }
 
         // ===== FUNÇÃO PARA CONVERTER LINK DO GOOGLE DRIVE =====
         function getGoogleDriveImageUrl(shareLink) {
-            if (!shareLink) return shareLink;
+            if (!shareLink || typeof shareLink !== 'string') return shareLink;
             
-            console.log('Processando link:', shareLink);
-            
-            // Tenta extrair o ID do Google Drive em diferentes formatos
-            let fileId = null;
-            
-            // Formato: /file/d/ID/view
-            const match1 = shareLink.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-            if (match1) fileId = match1[1];
-            
-            // Formato: id=ID
-            const match2 = shareLink.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-            if (match2) fileId = match2[1];
-            
-            // Formato: /open?id=ID
-            const match3 = shareLink.match(/\/open\?id=([a-zA-Z0-9_-]+)/);
-            if (match3) fileId = match3[1];
-            
-            // Formato: IDs puros (25+ caracteres)
-            const match4 = shareLink.match(/[-\w]{25,}/);
-            if (match4) fileId = match4[0];
-            
-            // Formato: drive.google.com/uc?export=view&id= (já convertido)
-            const match5 = shareLink.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-            if (match5) fileId = match5[1];
-            
-            if (fileId) {
-                const convertedUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
-                console.log('Link convertido:', convertedUrl);
-                return convertedUrl;
+            // Ignorar se for data URL (imagem base64) - como a logo
+            if (shareLink.startsWith('data:')) {
+                return shareLink;
             }
             
-            return shareLink;
+            // Ignorar se não for do Google Drive
+            if (!shareLink.includes('drive.google.com') && !shareLink.includes('googleusercontent.com')) {
+                return shareLink;
+            }
+            
+            try {
+                console.log('Processando link do Google Drive:', shareLink.substring(0, 50) + '...');
+                
+                // Tenta extrair o ID do Google Drive em diferentes formatos
+                let fileId = null;
+                
+                // Formato: /file/d/ID/view
+                const match1 = shareLink.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+                if (match1) fileId = match1[1];
+                
+                // Formato: id=ID
+                const match2 = shareLink.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                if (match2) fileId = match2[1];
+                
+                // Formato: /open?id=ID
+                const match3 = shareLink.match(/\/open\?id=([a-zA-Z0-9_-]+)/);
+                if (match3) fileId = match3[1];
+                
+                // Formato: IDs puros (25+ caracteres) - mas não processar se parecer com dados base64
+                const match4 = shareLink.match(/[-\w]{25,}/);
+                if (match4 && !match4[0].includes('/') && !match4[0].includes('data') && match4[0].length < 100) {
+                    fileId = match4[0];
+                }
+                
+                // Se já está no formato uc?export=view&id=, extrair o ID
+                if (!fileId && shareLink.includes('uc?export=view&id=')) {
+                    const match5 = shareLink.match(/id=([a-zA-Z0-9_-]+)/);
+                    if (match5) fileId = match5[1];
+                }
+                
+                if (fileId) {
+                    const convertedUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+                    console.log('Link convertido com sucesso');
+                    return convertedUrl;
+                }
+                
+                return shareLink;
+            } catch (error) {
+                console.error('Erro ao processar link:', error);
+                return shareLink;
+            }
         }
         // ===== FIM DA FUNÇÃO =====
 
@@ -1215,21 +1244,25 @@
 
         // Funções de filtro
         function filterSelection(c, event) {
-            var x, i;
-            x = document.getElementsByClassName("column");
-            if (c == "all") c = "";
-            for (i = 0; i < x.length; i++) {
-                w3RemoveClass(x[i], "show");
-                if (x[i].className.indexOf(c) > -1) w3AddClass(x[i], "show");
-            }
-            
-            // Atualizar botões ativos
-            var btns = document.getElementById("myBtnContainer").getElementsByClassName("btn");
-            for (i = 0; i < btns.length; i++) {
-                btns[i].classList.remove("active");
-            }
-            if (event && event.target) {
-                event.target.classList.add("active");
+            try {
+                var x, i;
+                x = document.getElementsByClassName("column");
+                if (c == "all") c = "";
+                for (i = 0; i < x.length; i++) {
+                    w3RemoveClass(x[i], "show");
+                    if (x[i].className.indexOf(c) > -1) w3AddClass(x[i], "show");
+                }
+                
+                // Atualizar botões ativos
+                var btns = document.getElementById("myBtnContainer").getElementsByClassName("btn");
+                for (i = 0; i < btns.length; i++) {
+                    btns[i].classList.remove("active");
+                }
+                if (event && event.target) {
+                    event.target.classList.add("active");
+                }
+            } catch (error) {
+                console.error('Erro no filtro:', error);
             }
         }
 
@@ -1256,24 +1289,30 @@
             element.className = arr1.join(" ");
         }
 
-        // Carregar dados do Supabase
+        // Carregar dados do Supabase com tratamento de erro
         async function loadData() {
             showLoading();
             
             try {
+                if (!supabase) {
+                    throw new Error('Cliente Supabase não inicializado');
+                }
+
                 // Carregar competições
                 const { data: compData, error: compError } = await supabase
                     .from('competitions')
-                    .select('*');
+                    .select('*')
+                    .timeout(10000);
                 
                 if (compError) throw compError;
                 competitions = compData || [];
-                console.log('Competições carregadas:', competitions);
+                console.log('Competições carregadas:', competitions.length);
 
                 // Carregar equipes
                 const { data: teamsData, error: teamsError } = await supabase
                     .from('teams')
-                    .select('*');
+                    .select('*')
+                    .timeout(10000);
                 
                 if (teamsError) throw teamsError;
                 
@@ -1293,12 +1332,13 @@
                     class: team.class || ''
                 }));
                 
-                console.log('Equipes carregadas:', teams);
+                console.log('Equipes carregadas:', teams.length);
 
                 // Carregar materiais
                 const { data: materialsData, error: materialsError } = await supabase
                     .from('materials')
-                    .select('*');
+                    .select('*')
+                    .timeout(10000);
                 
                 if (materialsError) throw materialsError;
                 materials = materialsData || [];
@@ -1308,7 +1348,8 @@
                     .from('settings')
                     .select('value')
                     .eq('key', 'formsUrl')
-                    .single();
+                    .single()
+                    .timeout(10000);
                 
                 if (formsError && formsError.code !== 'PGRST116') throw formsError;
                 formsUrl = formsData?.value || '';
@@ -1317,7 +1358,10 @@
                 
             } catch (error) {
                 console.error('Erro ao carregar dados:', error);
-                alert('Erro ao carregar dados do servidor: ' + error.message);
+                // Não mostrar alerta para erros de extensão
+                if (!error.message?.includes('listener')) {
+                    alert('Erro ao carregar dados do servidor. Verifique sua conexão.');
+                }
             } finally {
                 hideLoading();
                 renderPortfolio();
@@ -1368,168 +1412,174 @@
 
         // Renderizar portfólio - CORRIGIDO com placehold.co
         function renderPortfolio() {
-            const row = document.getElementById('portfolio-row');
-            
-            let items = [];
+            try {
+                const row = document.getElementById('portfolio-row');
+                
+                let items = [];
 
-            // Adicionar competições
-            competitions.forEach(comp => {
-                items.push({
-                    type: 'competition',
-                    id: comp.id,
-                    title: comp.title,
-                    description: comp.description,
-                    image: comp.image,
-                    link: comp.link,
-                    status: comp.status
+                // Adicionar competições
+                competitions.forEach(comp => {
+                    items.push({
+                        type: 'competition',
+                        id: comp.id,
+                        title: comp.title,
+                        description: comp.description,
+                        image: comp.image,
+                        link: comp.link,
+                        status: comp.status
+                    });
                 });
-            });
 
-            // Adicionar equipes - CORRIGIDO para usar os campos mapeados
-            teams.forEach(team => {
-                const competition = competitions.find(c => c.id === team.competition_id);
-                items.push({
-                    type: 'team',
-                    id: team.id,
-                    teamName: team.team_name || 'Nome não informado',
-                    projectName: team.project_name || 'Projeto não informado',
-                    status: team.status || 'inscrita',
-                    advisor: team.advisor || 'Não informado',
-                    image: team.image || null,
-                    competition: competition,
-                    members: team.members || [],
-                    year: team.year || '2024',
-                    class: team.class || 'Não informada',
-                    videoUrl: team.video_url || null,
-                    projectUrl: team.project_url || null
+                // Adicionar equipes - CORRIGIDO para usar os campos mapeados
+                teams.forEach(team => {
+                    const competition = competitions.find(c => c.id === team.competition_id);
+                    items.push({
+                        type: 'team',
+                        id: team.id,
+                        teamName: team.team_name || 'Nome não informado',
+                        projectName: team.project_name || 'Projeto não informado',
+                        status: team.status || 'inscrita',
+                        advisor: team.advisor || 'Não informado',
+                        image: team.image || null,
+                        competition: competition,
+                        members: team.members || [],
+                        year: team.year || '2024',
+                        class: team.class || 'Não informada',
+                        videoUrl: team.video_url || null,
+                        projectUrl: team.project_url || null
+                    });
                 });
-            });
 
-            // Adicionar materiais de apoio
-            materials.forEach(material => {
-                const competition = competitions.find(c => c.id === material.competition_id);
-                items.push({
-                    type: 'material',
-                    id: material.id,
-                    title: material.title,
-                    description: material.description,
-                    type: material.type,
-                    url: material.url,
-                    competition: competition
+                // Adicionar materiais de apoio
+                materials.forEach(material => {
+                    const competition = competitions.find(c => c.id === material.competition_id);
+                    items.push({
+                        type: 'material',
+                        id: material.id,
+                        title: material.title,
+                        description: material.description,
+                        type: material.type,
+                        url: material.url,
+                        competition: competition
+                    });
                 });
-            });
 
-            if (items.length === 0) {
-                row.innerHTML = `
-                    <div class="empty-state">
-                        <p>Nenhum item cadastrado ainda.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            // Gerar HTML do grid
-            row.innerHTML = items.map(item => {
-                if (item.type === 'competition') {
-                    const statusClass = item.status === 'aberta' ? 'aberta' : 'fechada';
-                    const statusText = item.status === 'aberta' ? '✅ Aberta' : '🔒 Fechada';
-                    
-                    // URL da imagem com fallback para placehold.co
-                    const imageUrl = item.image || 'https://placehold.co/300x200/667eea/white?text=Competição';
-                    
-                    return `
-                        <div class="column competition">
-                            <div class="content">
-                                <img src="${imageUrl}" 
-                                     alt="${item.title}" 
-                                     onerror="this.onerror=null; this.src='https://placehold.co/300x200/dc3545/white?text=Erro'">
-                                <span class="category-badge competition">🏆 Competição</span>
-                                <span class="status-badge ${statusClass}">${statusText}</span>
-                                <h4>${item.title}</h4>
-                                <p>${item.description}</p>
-                                <div class="portfolio-links">
-                                    <a href="${item.link}" target="_blank" class="portfolio-link competition">🔗 Site Oficial</a>
-                                </div>
-                            </div>
+                if (items.length === 0) {
+                    row.innerHTML = `
+                        <div class="empty-state">
+                            <p>Nenhum item cadastrado ainda.</p>
                         </div>
                     `;
-                } else if (item.type === 'team') {
-                    const statusMap = {
-                        'inscrita': '📝 Inscrita',
-                        'classificada': '✅ Classificada',
-                        'participando': '⚡ Participando',
-                        'eliminada': '❌ Eliminada',
-                        'venceu': '🏆 Venceu'
-                    };
-                    
-                    // URL da imagem com fallback para placehold.co
-                    // Garantir que a imagem seja processada corretamente
-                    let imageUrl = item.image;
-                    if (imageUrl) {
-                        // Se já não foi processada, processa agora
-                        imageUrl = getGoogleDriveImageUrl(imageUrl);
-                    } else {
-                        imageUrl = 'https://placehold.co/300x200/28a745/white?text=Equipe';
-                    }
-                    
-                    return `
-                        <div class="column team">
-                            <div class="content">
-                                <img src="${imageUrl}" 
-                                     alt="${item.teamName}" 
-                                     onerror="this.onerror=null; this.src='https://placehold.co/300x200/dc3545/white?text=Erro'">
-                                <span class="category-badge team">👥 Equipe</span>
-                                <span class="team-status ${item.status}">${statusMap[item.status] || item.status}</span>
-                                <h4>${item.teamName}</h4>
-                                <p><strong>Projeto:</strong> ${item.projectName}</p>
-                                <p><strong>Competição:</strong> ${item.competition ? item.competition.title : 'Não especificada'}</p>
-                                <p><strong>Orientador:</strong> ${item.advisor}</p>
-                                <div class="team-members">
-                                    <strong>Integrantes:</strong>
-                                    ${item.members.length > 0 ? item.members.join('<br>') : 'Não informado'}
-                                </div>
-                                <div class="portfolio-tags">
-                                    <span class="tag">📅 ${item.year}</span>
-                                    <span class="tag">📚 ${item.class}</span>
-                                </div>
-                                <div class="portfolio-links">
-                                    ${item.videoUrl ? `<a href="${item.videoUrl}" target="_blank" class="portfolio-link video">🎥 Vídeo</a>` : ''}
-                                    ${item.projectUrl ? `<a href="${item.projectUrl}" target="_blank" class="portfolio-link project">📁 Projeto</a>` : ''}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    // Material de apoio
-                    const typeIcons = {
-                        'pdf': '📄',
-                        'video': '🎥',
-                        'link': '🔗',
-                        'presentation': '📊',
-                        'code': '💻'
-                    };
-                    
-                    return `
-                        <div class="column material">
-                            <div class="content">
-                                <span class="category-badge material">📚 Material de Apoio</span>
-                                <h4>${item.title}</h4>
-                                <p><strong>Competição:</strong> ${item.competition ? item.competition.title : 'Geral'}</p>
-                                <p>${item.description}</p>
-                                <div class="portfolio-tags">
-                                    <span class="tag">${typeIcons[item.type] || '📁'} ${item.type.toUpperCase()}</span>
-                                </div>
-                                <div class="portfolio-links">
-                                    <a href="${item.url}" target="_blank" class="portfolio-link material">📥 Acessar Material</a>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    return;
                 }
-            }).join('');
 
-            // Aplicar filtro inicial sem evento
-            filterSelection('all', null);
+                // Gerar HTML do grid
+                row.innerHTML = items.map(item => {
+                    if (item.type === 'competition') {
+                        const statusClass = item.status === 'aberta' ? 'aberta' : 'fechada';
+                        const statusText = item.status === 'aberta' ? '✅ Aberta' : '🔒 Fechada';
+                        
+                        // URL da imagem com fallback para placehold.co
+                        const imageUrl = item.image || 'https://placehold.co/300x200/667eea/white?text=Competição';
+                        
+                        return `
+                            <div class="column competition">
+                                <div class="content">
+                                    <img src="${imageUrl}" 
+                                         alt="${item.title}" 
+                                         onerror="this.onerror=null; this.src='https://placehold.co/300x200/dc3545/white?text=Erro'">
+                                    <span class="category-badge competition">🏆 Competição</span>
+                                    <span class="status-badge ${statusClass}">${statusText}</span>
+                                    <h4>${item.title}</h4>
+                                    <p>${item.description}</p>
+                                    <div class="portfolio-links">
+                                        <a href="${item.link}" target="_blank" class="portfolio-link competition">🔗 Site Oficial</a>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else if (item.type === 'team') {
+                        const statusMap = {
+                            'inscrita': '📝 Inscrita',
+                            'classificada': '✅ Classificada',
+                            'participando': '⚡ Participando',
+                            'eliminada': '❌ Eliminada',
+                            'venceu': '🏆 Venceu'
+                        };
+                        
+                        // URL da imagem com fallback para placehold.co
+                        // Garantir que a imagem seja processada corretamente
+                        let imageUrl = item.image;
+                        if (imageUrl && typeof imageUrl === 'string') {
+                            // Só processa se não for a logo (não começar com data:)
+                            if (!imageUrl.startsWith('data:')) {
+                                imageUrl = getGoogleDriveImageUrl(imageUrl);
+                            }
+                        } else {
+                            imageUrl = 'https://placehold.co/300x200/28a745/white?text=Equipe';
+                        }
+                        
+                        return `
+                            <div class="column team">
+                                <div class="content">
+                                    <img src="${imageUrl}" 
+                                         alt="${item.teamName}" 
+                                         onerror="this.onerror=null; this.src='https://placehold.co/300x200/dc3545/white?text=Erro'">
+                                    <span class="category-badge team">👥 Equipe</span>
+                                    <span class="team-status ${item.status}">${statusMap[item.status] || item.status}</span>
+                                    <h4>${item.teamName}</h4>
+                                    <p><strong>Projeto:</strong> ${item.projectName}</p>
+                                    <p><strong>Competição:</strong> ${item.competition ? item.competition.title : 'Não especificada'}</p>
+                                    <p><strong>Orientador:</strong> ${item.advisor}</p>
+                                    <div class="team-members">
+                                        <strong>Integrantes:</strong>
+                                        ${item.members.length > 0 ? item.members.join('<br>') : 'Não informado'}
+                                    </div>
+                                    <div class="portfolio-tags">
+                                        <span class="tag">📅 ${item.year}</span>
+                                        <span class="tag">📚 ${item.class}</span>
+                                    </div>
+                                    <div class="portfolio-links">
+                                        ${item.videoUrl ? `<a href="${item.videoUrl}" target="_blank" class="portfolio-link video">🎥 Vídeo</a>` : ''}
+                                        ${item.projectUrl ? `<a href="${item.projectUrl}" target="_blank" class="portfolio-link project">📁 Projeto</a>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // Material de apoio
+                        const typeIcons = {
+                            'pdf': '📄',
+                            'video': '🎥',
+                            'link': '🔗',
+                            'presentation': '📊',
+                            'code': '💻'
+                        };
+                        
+                        return `
+                            <div class="column material">
+                                <div class="content">
+                                    <span class="category-badge material">📚 Material de Apoio</span>
+                                    <h4>${item.title}</h4>
+                                    <p><strong>Competição:</strong> ${item.competition ? item.competition.title : 'Geral'}</p>
+                                    <p>${item.description}</p>
+                                    <div class="portfolio-tags">
+                                        <span class="tag">${typeIcons[item.type] || '📁'} ${item.type.toUpperCase()}</span>
+                                    </div>
+                                    <div class="portfolio-links">
+                                        <a href="${item.url}" target="_blank" class="portfolio-link material">📥 Acessar Material</a>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }).join('');
+
+                // Aplicar filtro inicial sem evento
+                filterSelection('all', null);
+            } catch (error) {
+                console.error('Erro ao renderizar portfólio:', error);
+            }
         }
 
         // Mostrar página
@@ -1569,42 +1619,46 @@
 
         // Atualizar selects de competição
         function updateCompetitionSelects() {
-            console.log('Atualizando selects... Competições:', competitions);
-            
-            // Select para equipes
-            const teamSelect = document.getElementById('team-competition-select');
-            if (teamSelect) {
-                if (competitions.length === 0) {
-                    teamSelect.innerHTML = '<option value="">Nenhuma competição cadastrada</option>';
-                } else {
-                    teamSelect.innerHTML = '<option value="">Selecione uma competição</option>' +
+            try {
+                console.log('Atualizando selects... Competições:', competitions.length);
+                
+                // Select para equipes
+                const teamSelect = document.getElementById('team-competition-select');
+                if (teamSelect) {
+                    if (competitions.length === 0) {
+                        teamSelect.innerHTML = '<option value="">Nenhuma competição cadastrada</option>';
+                    } else {
+                        teamSelect.innerHTML = '<option value="">Selecione uma competição</option>' +
+                            competitions.map(comp => `<option value="${comp.id}">${comp.title}</option>`).join('');
+                    }
+                }
+
+                // Select para materiais
+                const materialSelect = document.getElementById('material-competition-select');
+                if (materialSelect) {
+                    if (competitions.length === 0) {
+                        materialSelect.innerHTML = '<option value="">Nenhuma competição cadastrada</option>';
+                    } else {
+                        materialSelect.innerHTML = '<option value="">Selecione uma competição</option>' +
+                            competitions.map(comp => `<option value="${comp.id}">${comp.title}</option>`).join('');
+                    }
+                }
+
+                // Filtro para equipes
+                const teamFilter = document.getElementById('team-competition-filter');
+                if (teamFilter) {
+                    teamFilter.innerHTML = '<option value="">Todas as Competições</option>' +
                         competitions.map(comp => `<option value="${comp.id}">${comp.title}</option>`).join('');
                 }
-            }
 
-            // Select para materiais
-            const materialSelect = document.getElementById('material-competition-select');
-            if (materialSelect) {
-                if (competitions.length === 0) {
-                    materialSelect.innerHTML = '<option value="">Nenhuma competição cadastrada</option>';
-                } else {
-                    materialSelect.innerHTML = '<option value="">Selecione uma competição</option>' +
+                // Filtro para materiais
+                const materialFilter = document.getElementById('material-competition-filter');
+                if (materialFilter) {
+                    materialFilter.innerHTML = '<option value="">Todas as Competições</option>' +
                         competitions.map(comp => `<option value="${comp.id}">${comp.title}</option>`).join('');
                 }
-            }
-
-            // Filtro para equipes
-            const teamFilter = document.getElementById('team-competition-filter');
-            if (teamFilter) {
-                teamFilter.innerHTML = '<option value="">Todas as Competições</option>' +
-                    competitions.map(comp => `<option value="${comp.id}">${comp.title}</option>`).join('');
-            }
-
-            // Filtro para materiais
-            const materialFilter = document.getElementById('material-competition-filter');
-            if (materialFilter) {
-                materialFilter.innerHTML = '<option value="">Todas as Competições</option>' +
-                    competitions.map(comp => `<option value="${comp.id}">${comp.title}</option>`).join('');
+            } catch (error) {
+                console.error('Erro ao atualizar selects:', error);
             }
         }
 
@@ -1620,180 +1674,196 @@
 
         // Renderizar admin - competições
         function renderAdminCompetitions() {
-            const list = document.getElementById('competition-list');
+            try {
+                const list = document.getElementById('competition-list');
 
-            if (competitions.length === 0) {
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <p>Nenhuma competição cadastrada.</p>
-                        <p>Clique em "Adicionar Nova Competição" para começar.</p>
+                if (competitions.length === 0) {
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <p>Nenhuma competição cadastrada.</p>
+                            <p>Clique em "Adicionar Nova Competição" para começar.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                list.innerHTML = competitions.map(comp => `
+                    <div class="competition-item">
+                        <div class="competition-info">
+                            <h3>${comp.title} ${comp.status === 'aberta' ? '✅' : '🔒'}</h3>
+                            <p>${comp.description}</p>
+                            <p><strong>Status:</strong> ${comp.status === 'aberta' ? 'Aberta' : 'Fechada'}</p>
+                            <small><a href="${comp.link}" target="_blank">${comp.link}</a></small>
+                        </div>
+                        <div class="competition-actions">
+                            <button onclick="editCompetition('${comp.id}')" class="btn-edit">
+                                Editar
+                            </button>
+                            <button onclick="deleteCompetition('${comp.id}')" class="btn-danger">
+                                Excluir
+                            </button>
+                        </div>
                     </div>
-                `;
-                return;
+                `).join('');
+            } catch (error) {
+                console.error('Erro ao renderizar competições:', error);
             }
-
-            list.innerHTML = competitions.map(comp => `
-                <div class="competition-item">
-                    <div class="competition-info">
-                        <h3>${comp.title} ${comp.status === 'aberta' ? '✅' : '🔒'}</h3>
-                        <p>${comp.description}</p>
-                        <p><strong>Status:</strong> ${comp.status === 'aberta' ? 'Aberta' : 'Fechada'}</p>
-                        <small><a href="${comp.link}" target="_blank">${comp.link}</a></small>
-                    </div>
-                    <div class="competition-actions">
-                        <button onclick="editCompetition('${comp.id}')" class="btn-edit">
-                            Editar
-                        </button>
-                        <button onclick="deleteCompetition('${comp.id}')" class="btn-danger">
-                            Excluir
-                        </button>
-                    </div>
-                </div>
-            `).join('');
         }
 
         // Renderizar admin - equipes - CORRIGIDO
         function renderAdminTeams() {
-            const list = document.getElementById('teams-list');
-            const filter = document.getElementById('team-competition-filter').value;
+            try {
+                const list = document.getElementById('teams-list');
+                const filter = document.getElementById('team-competition-filter').value;
 
-            let filteredTeams = teams;
-            if (filter) {
-                filteredTeams = teams.filter(t => t.competition_id === filter);
-            }
+                let filteredTeams = teams;
+                if (filter) {
+                    filteredTeams = teams.filter(t => t.competition_id === filter);
+                }
 
-            if (filteredTeams.length === 0) {
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <p>Nenhuma equipe cadastrada.</p>
-                        <p>Clique em "Adicionar Nova Equipe" para começar.</p>
-                    </div>
-                `;
-                return;
-            }
+                if (filteredTeams.length === 0) {
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <p>Nenhuma equipe cadastrada.</p>
+                            <p>Clique em "Adicionar Nova Equipe" para começar.</p>
+                        </div>
+                    `;
+                    return;
+                }
 
-            list.innerHTML = filteredTeams.map(team => {
-                const competition = competitions.find(c => c.id === team.competition_id);
-                const statusMap = {
-                    'inscrita': 'Inscrita',
-                    'classificada': 'Classificada',
-                    'participando': 'Participando',
-                    'eliminada': 'Eliminada',
-                    'venceu': 'Venceu'
-                };
-                return `
-                    <div class="team-item">
-                        <div class="team-info">
-                            <h3>${team.team_name || 'Nome não informado'}</h3>
-                            <p><strong>Projeto:</strong> ${team.project_name || 'Não informado'}</p>
-                            <p><strong>Competição:</strong> ${competition ? competition.title : 'Competição não encontrada'}</p>
-                            <p><strong>Status:</strong> ${statusMap[team.status] || team.status}</p>
-                            <p><strong>Orientador:</strong> ${team.advisor || 'Não informado'}</p>
-                            <p><strong>Integrantes:</strong> ${team.members ? team.members.join(', ') : 'Não informado'}</p>
-                            <p><strong>Ano/Turma:</strong> ${team.year} - ${team.class}</p>
-                            <div class="team-links-info">
-                                ${team.video_url ? `<a href="${team.video_url}" target="_blank">🎥 Vídeo</a>` : ''}
-                                ${team.project_url ? `<a href="${team.project_url}" target="_blank">📁 Projeto</a>` : ''}
+                list.innerHTML = filteredTeams.map(team => {
+                    const competition = competitions.find(c => c.id === team.competition_id);
+                    const statusMap = {
+                        'inscrita': 'Inscrita',
+                        'classificada': 'Classificada',
+                        'participando': 'Participando',
+                        'eliminada': 'Eliminada',
+                        'venceu': 'Venceu'
+                    };
+                    return `
+                        <div class="team-item">
+                            <div class="team-info">
+                                <h3>${team.team_name || 'Nome não informado'}</h3>
+                                <p><strong>Projeto:</strong> ${team.project_name || 'Não informado'}</p>
+                                <p><strong>Competição:</strong> ${competition ? competition.title : 'Competição não encontrada'}</p>
+                                <p><strong>Status:</strong> ${statusMap[team.status] || team.status}</p>
+                                <p><strong>Orientador:</strong> ${team.advisor || 'Não informado'}</p>
+                                <p><strong>Integrantes:</strong> ${team.members ? team.members.join(', ') : 'Não informado'}</p>
+                                <p><strong>Ano/Turma:</strong> ${team.year} - ${team.class}</p>
+                                <div class="team-links-info">
+                                    ${team.video_url ? `<a href="${team.video_url}" target="_blank">🎥 Vídeo</a>` : ''}
+                                    ${team.project_url ? `<a href="${team.project_url}" target="_blank">📁 Projeto</a>` : ''}
+                                </div>
+                            </div>
+                            <div class="team-actions">
+                                <button onclick="editTeam('${team.id}')" class="btn-edit">
+                                    Editar
+                                </button>
+                                <button onclick="deleteTeam('${team.id}')" class="btn-danger">
+                                    Excluir
+                                </button>
                             </div>
                         </div>
-                        <div class="team-actions">
-                            <button onclick="editTeam('${team.id}')" class="btn-edit">
-                                Editar
-                            </button>
-                            <button onclick="deleteTeam('${team.id}')" class="btn-danger">
-                                Excluir
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Erro ao renderizar equipes:', error);
+            }
         }
 
         // Renderizar admin - materiais
         function renderAdminMaterials() {
-            const list = document.getElementById('materials-list');
-            const filter = document.getElementById('material-competition-filter').value;
+            try {
+                const list = document.getElementById('materials-list');
+                const filter = document.getElementById('material-competition-filter').value;
 
-            let filteredMaterials = materials;
-            if (filter) {
-                filteredMaterials = materials.filter(m => m.competition_id === filter);
-            }
+                let filteredMaterials = materials;
+                if (filter) {
+                    filteredMaterials = materials.filter(m => m.competition_id === filter);
+                }
 
-            if (filteredMaterials.length === 0) {
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <p>Nenhum material de apoio cadastrado.</p>
-                        <p>Clique em "Adicionar Novo Material de Apoio" para começar.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            const typeNames = {
-                'pdf': 'PDF - Documento',
-                'video': 'Vídeo - Tutorial',
-                'link': 'Link - Site/Artigo',
-                'presentation': 'Apresentação',
-                'code': 'Código - Exemplo'
-            };
-
-            list.innerHTML = filteredMaterials.map(material => {
-                const competition = competitions.find(c => c.id === material.competition_id);
-                return `
-                    <div class="material-item">
-                        <div class="material-info">
-                            <h3>${material.title}</h3>
-                            <p><strong>Competição:</strong> ${competition ? competition.title : 'Competição não encontrada'}</p>
-                            <p><strong>Tipo:</strong> ${typeNames[material.type] || material.type}</p>
-                            <p><strong>Descrição:</strong> ${material.description}</p>
-                            <small><a href="${material.url}" target="_blank">${material.url}</a></small>
+                if (filteredMaterials.length === 0) {
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <p>Nenhum material de apoio cadastrado.</p>
+                            <p>Clique em "Adicionar Novo Material de Apoio" para começar.</p>
                         </div>
-                        <div class="material-actions">
-                            <button onclick="editMaterial('${material.id}')" class="btn-edit">
-                                Editar
-                            </button>
-                            <button onclick="deleteMaterial('${material.id}')" class="btn-danger">
-                                Excluir
-                            </button>
+                    `;
+                    return;
+                }
+
+                const typeNames = {
+                    'pdf': 'PDF - Documento',
+                    'video': 'Vídeo - Tutorial',
+                    'link': 'Link - Site/Artigo',
+                    'presentation': 'Apresentação',
+                    'code': 'Código - Exemplo'
+                };
+
+                list.innerHTML = filteredMaterials.map(material => {
+                    const competition = competitions.find(c => c.id === material.competition_id);
+                    return `
+                        <div class="material-item">
+                            <div class="material-info">
+                                <h3>${material.title}</h3>
+                                <p><strong>Competição:</strong> ${competition ? competition.title : 'Competição não encontrada'}</p>
+                                <p><strong>Tipo:</strong> ${typeNames[material.type] || material.type}</p>
+                                <p><strong>Descrição:</strong> ${material.description}</p>
+                                <small><a href="${material.url}" target="_blank">${material.url}</a></small>
+                            </div>
+                            <div class="material-actions">
+                                <button onclick="editMaterial('${material.id}')" class="btn-edit">
+                                    Editar
+                                </button>
+                                <button onclick="deleteMaterial('${material.id}')" class="btn-danger">
+                                    Excluir
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                `;
-            }).join('');
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Erro ao renderizar materiais:', error);
+            }
         }
 
         // Renderizar admin - forms (CORRIGIDO - sem iframe)
         function renderAdminForms() {
-            const list = document.getElementById('forms-list');
-            const preview = document.getElementById('forms-preview');
-            const previewLink = document.getElementById('forms-preview-link');
+            try {
+                const list = document.getElementById('forms-list');
+                const preview = document.getElementById('forms-preview');
+                const previewLink = document.getElementById('forms-preview-link');
 
-            document.getElementById('forms-url').value = formsUrl;
+                document.getElementById('forms-url').value = formsUrl;
 
-            if (formsUrl) {
-                preview.style.display = 'block';
-                previewLink.href = formsUrl;
-                
-                list.innerHTML = `
-                    <div class="form-item">
-                        <div class="form-info">
-                            <h3>Google Forms Ativo</h3>
-                            <p><strong>URL:</strong> <a href="${formsUrl}" target="_blank">${formsUrl}</a></p>
+                if (formsUrl) {
+                    preview.style.display = 'block';
+                    previewLink.href = formsUrl;
+                    
+                    list.innerHTML = `
+                        <div class="form-item">
+                            <div class="form-info">
+                                <h3>Google Forms Ativo</h3>
+                                <p><strong>URL:</strong> <a href="${formsUrl}" target="_blank">${formsUrl}</a></p>
+                            </div>
+                            <div class="form-actions">
+                                <button onclick="clearFormsUrl()" class="btn-danger">
+                                    Remover
+                                </button>
+                            </div>
                         </div>
-                        <div class="form-actions">
-                            <button onclick="clearFormsUrl()" class="btn-danger">
-                                Remover
-                            </button>
+                    `;
+                } else {
+                    preview.style.display = 'none';
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <p>Nenhum formulário configurado.</p>
+                            <p>Cole a URL do Google Forms acima e clique em "Salvar Link do Forms".</p>
                         </div>
-                    </div>
-                `;
-            } else {
-                preview.style.display = 'none';
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <p>Nenhum formulário configurado.</p>
-                        <p>Cole a URL do Google Forms acima e clique em "Salvar Link do Forms".</p>
-                    </div>
-                `;
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro ao renderizar forms:', error);
             }
         }
 
@@ -1808,9 +1878,12 @@
             showLoading();
             
             try {
+                if (!supabase) throw new Error('Cliente Supabase não inicializado');
+
                 const { error } = await supabase
                     .from('settings')
-                    .upsert({ key: 'formsUrl', value: url }, { onConflict: 'key' });
+                    .upsert({ key: 'formsUrl', value: url }, { onConflict: 'key' })
+                    .timeout(10000);
 
                 if (error) throw error;
 
@@ -1820,7 +1893,9 @@
                 alert('Link do Forms salvo com sucesso!');
             } catch (error) {
                 console.error('Erro ao salvar forms:', error);
-                alert('Erro ao salvar link do Forms. Tente novamente.');
+                if (!error.message?.includes('listener')) {
+                    alert('Erro ao salvar link do Forms. Tente novamente.');
+                }
             } finally {
                 hideLoading();
             }
@@ -1833,9 +1908,12 @@
             showLoading();
             
             try {
+                if (!supabase) throw new Error('Cliente Supabase não inicializado');
+
                 const { error } = await supabase
                     .from('settings')
-                    .upsert({ key: 'formsUrl', value: '' }, { onConflict: 'key' });
+                    .upsert({ key: 'formsUrl', value: '' }, { onConflict: 'key' })
+                    .timeout(10000);
 
                 if (error) throw error;
 
@@ -1845,7 +1923,9 @@
                 renderAdminForms();
             } catch (error) {
                 console.error('Erro ao remover forms:', error);
-                alert('Erro ao remover link do Forms. Tente novamente.');
+                if (!error.message?.includes('listener')) {
+                    alert('Erro ao remover link do Forms. Tente novamente.');
+                }
             } finally {
                 hideLoading();
             }
@@ -1892,11 +1972,14 @@
             showLoading();
 
             try {
+                if (!supabase) throw new Error('Cliente Supabase não inicializado');
+
                 if (editingCompetitionId) {
                     const { error } = await supabase
                         .from('competitions')
                         .update(competitionData)
-                        .eq('id', editingCompetitionId);
+                        .eq('id', editingCompetitionId)
+                        .timeout(10000);
 
                     if (error) throw error;
 
@@ -1907,7 +1990,8 @@
                 } else {
                     const { error } = await supabase
                         .from('competitions')
-                        .insert([competitionData]);
+                        .insert([competitionData])
+                        .timeout(10000);
 
                     if (error) throw error;
 
@@ -1919,7 +2003,9 @@
                 alert('Competição salva com sucesso!');
             } catch (error) {
                 console.error('Erro ao salvar competição:', error);
-                alert('Erro ao salvar competição: ' + error.message);
+                if (!error.message?.includes('listener')) {
+                    alert('Erro ao salvar competição. Tente novamente.');
+                }
             } finally {
                 hideLoading();
             }
@@ -1951,10 +2037,13 @@
             showLoading();
 
             try {
+                if (!supabase) throw new Error('Cliente Supabase não inicializado');
+
                 const { error } = await supabase
                     .from('competitions')
                     .delete()
-                    .eq('id', id);
+                    .eq('id', id)
+                    .timeout(10000);
 
                 if (error) throw error;
 
@@ -1966,7 +2055,9 @@
                 alert('Competição excluída com sucesso!');
             } catch (error) {
                 console.error('Erro ao excluir competição:', error);
-                alert('Erro ao excluir competição: ' + error.message);
+                if (!error.message?.includes('listener')) {
+                    alert('Erro ao excluir competição. Tente novamente.');
+                }
             } finally {
                 hideLoading();
             }
@@ -2026,11 +2117,14 @@
             showLoading();
 
             try {
+                if (!supabase) throw new Error('Cliente Supabase não inicializado');
+
                 if (editingMaterialId) {
                     const { error } = await supabase
                         .from('materials')
                         .update(materialData)
-                        .eq('id', editingMaterialId);
+                        .eq('id', editingMaterialId)
+                        .timeout(10000);
 
                     if (error) throw error;
 
@@ -2041,7 +2135,8 @@
                 } else {
                     const { error } = await supabase
                         .from('materials')
-                        .insert([materialData]);
+                        .insert([materialData])
+                        .timeout(10000);
 
                     if (error) throw error;
 
@@ -2053,7 +2148,9 @@
                 alert('Material salvo com sucesso!');
             } catch (error) {
                 console.error('Erro ao salvar material:', error);
-                alert('Erro ao salvar material: ' + error.message);
+                if (!error.message?.includes('listener')) {
+                    alert('Erro ao salvar material. Tente novamente.');
+                }
             } finally {
                 hideLoading();
             }
@@ -2085,10 +2182,13 @@
             showLoading();
 
             try {
+                if (!supabase) throw new Error('Cliente Supabase não inicializado');
+
                 const { error } = await supabase
                     .from('materials')
                     .delete()
-                    .eq('id', id);
+                    .eq('id', id)
+                    .timeout(10000);
 
                 if (error) throw error;
 
@@ -2097,7 +2197,9 @@
                 alert('Material excluído com sucesso!');
             } catch (error) {
                 console.error('Erro ao excluir material:', error);
-                alert('Erro ao excluir material: ' + error.message);
+                if (!error.message?.includes('listener')) {
+                    alert('Erro ao excluir material. Tente novamente.');
+                }
             } finally {
                 hideLoading();
             }
@@ -2177,17 +2279,21 @@
             showLoading();
 
             try {
+                if (!supabase) throw new Error('Cliente Supabase não inicializado');
+
                 if (editingTeamId) {
                     const { error } = await supabase
                         .from('teams')
                         .update(teamData)
-                        .eq('id', editingTeamId);
+                        .eq('id', editingTeamId)
+                        .timeout(10000);
 
                     if (error) throw error;
                 } else {
                     const { error } = await supabase
                         .from('teams')
-                        .insert([teamData]);
+                        .insert([teamData])
+                        .timeout(10000);
 
                     if (error) throw error;
                 }
@@ -2197,7 +2303,9 @@
                 alert('Equipe salva com sucesso!');
             } catch (error) {
                 console.error('Erro ao salvar equipe:', error);
-                alert('Erro ao salvar equipe: ' + error.message);
+                if (!error.message?.includes('listener')) {
+                    alert('Erro ao salvar equipe. Tente novamente.');
+                }
             } finally {
                 hideLoading();
             }
@@ -2235,10 +2343,13 @@
             showLoading();
 
             try {
+                if (!supabase) throw new Error('Cliente Supabase não inicializado');
+
                 const { error } = await supabase
                     .from('teams')
                     .delete()
-                    .eq('id', id);
+                    .eq('id', id)
+                    .timeout(10000);
 
                 if (error) throw error;
 
@@ -2246,7 +2357,9 @@
                 alert('Equipe excluída com sucesso!');
             } catch (error) {
                 console.error('Erro ao excluir equipe:', error);
-                alert('Erro ao excluir equipe: ' + error.message);
+                if (!error.message?.includes('listener')) {
+                    alert('Erro ao excluir equipe. Tente novamente.');
+                }
             } finally {
                 hideLoading();
             }
@@ -2255,7 +2368,10 @@
         // Inicializar
         document.addEventListener('DOMContentLoaded', () => {
             checkLoginStatus();
-            loadData();
+            // Pequeno atraso para evitar conflitos com extensões
+            setTimeout(() => {
+                loadData();
+            }, 100);
             
             window.onclick = function(event) {
                 const modals = ['competition-modal', 'team-modal', 'material-modal', 'login-modal'];
