@@ -837,7 +837,7 @@
                         <div id="teams-list" class="teams-list"></div>
                     </div>
 
-                    <!-- NOVA Tab Materiais de Apoio -->
+                    <!-- Tab Materiais de Apoio -->
                     <div id="materials-tab" class="tab-content">
                         <div class="form-group">
                             <label for="material-competition-filter">Filtrar por Competição:</label>
@@ -949,7 +949,7 @@
         </div>
     </div>
 
-    <!-- NOVO Modal para Material de Apoio - CORRIGIDO -->
+    <!-- Modal para Material de Apoio -->
     <div id="material-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -961,10 +961,9 @@
                 <input type="hidden" id="material-id">
                 
                 <div class="form-group">
-                    <label for="material-competition">Competição Relacionada</label>
-                    <select id="material-competition" required>
+                    <label for="material-competition-select">Competição Relacionada</label>
+                    <select id="material-competition-select" required>
                         <option value="">Selecione uma competição</option>
-                        <!-- As opções serão preenchidas via JavaScript -->
                     </select>
                 </div>
 
@@ -1012,8 +1011,8 @@
                 <input type="hidden" id="team-id">
                 
                 <div class="form-group">
-                    <label for="team-competition">Competição</label>
-                    <select id="team-competition" required>
+                    <label for="team-competition-select">Competição</label>
+                    <select id="team-competition-select" required>
                         <option value="">Selecione uma competição</option>
                     </select>
                 </div>
@@ -1300,7 +1299,6 @@
                 renderAdminMaterials();
                 renderAdminForms();
                 updateCompetitionSelects();
-                updateMaterialCompetitionSelects();
             }
         }
 
@@ -1314,7 +1312,6 @@
                 renderAdminTeams();
                 renderAdminMaterials();
                 updateCompetitionSelects();
-                updateMaterialCompetitionSelects();
             } finally {
                 hideLoading();
             }
@@ -1532,32 +1529,43 @@
             }
         }
 
-        // Atualizar selects de competição
+        // Atualizar selects de competição - CORRIGIDO
         function updateCompetitionSelects() {
-            const teamSelect = document.getElementById('team-competition');
+            console.log('Atualizando selects... Competições:', competitions);
+            
+            // Select para equipes
+            const teamSelect = document.getElementById('team-competition-select');
             if (teamSelect) {
-                teamSelect.innerHTML = '<option value="">Selecione uma competição</option>' +
-                    competitions.map(comp => `<option value="${comp.id}">${comp.title}</option>`).join('');
+                if (competitions.length === 0) {
+                    teamSelect.innerHTML = '<option value="">Nenhuma competição cadastrada</option>';
+                } else {
+                    teamSelect.innerHTML = '<option value="">Selecione uma competição</option>' +
+                        competitions.map(comp => `<option value="${comp.id}">${comp.title}</option>`).join('');
+                }
             }
 
-            const filterSelect = document.getElementById('team-competition-filter');
-            if (filterSelect) {
-                filterSelect.innerHTML = '<option value="">Todas as Competições</option>' +
-                    competitions.map(comp => `<option value="${comp.id}">${comp.title}</option>`).join('');
-            }
-        }
-
-        // NOVO: Atualizar selects de competição para materiais
-        function updateMaterialCompetitionSelects() {
-            const materialSelect = document.getElementById('material-competition');
+            // Select para materiais
+            const materialSelect = document.getElementById('material-competition-select');
             if (materialSelect) {
-                materialSelect.innerHTML = '<option value="">Selecione uma competição</option>' +
+                if (competitions.length === 0) {
+                    materialSelect.innerHTML = '<option value="">Nenhuma competição cadastrada</option>';
+                } else {
+                    materialSelect.innerHTML = '<option value="">Selecione uma competição</option>' +
+                        competitions.map(comp => `<option value="${comp.id}">${comp.title}</option>`).join('');
+                }
+            }
+
+            // Filtro para equipes
+            const teamFilter = document.getElementById('team-competition-filter');
+            if (teamFilter) {
+                teamFilter.innerHTML = '<option value="">Todas as Competições</option>' +
                     competitions.map(comp => `<option value="${comp.id}">${comp.title}</option>`).join('');
             }
 
-            const filterSelect = document.getElementById('material-competition-filter');
-            if (filterSelect) {
-                filterSelect.innerHTML = '<option value="">Todas as Competições</option>' +
+            // Filtro para materiais
+            const materialFilter = document.getElementById('material-competition-filter');
+            if (materialFilter) {
+                materialFilter.innerHTML = '<option value="">Todas as Competições</option>' +
                     competitions.map(comp => `<option value="${comp.id}">${comp.title}</option>`).join('');
             }
         }
@@ -1606,7 +1614,7 @@
             `).join('');
         }
 
-        // Renderizar admin - equipes (CORRIGIDO)
+        // Renderizar admin - equipes
         function renderAdminTeams() {
             const list = document.getElementById('teams-list');
             const filter = document.getElementById('team-competition-filter').value;
@@ -1663,7 +1671,7 @@
             }).join('');
         }
 
-        // Renderizar admin - materiais (CORRIGIDO)
+        // Renderizar admin - materiais
         function renderAdminMaterials() {
             const list = document.getElementById('materials-list');
             const filter = document.getElementById('material-competition-filter').value;
@@ -1870,7 +1878,7 @@
 
                 closeCompetitionModal();
                 await saveData();
-                updateMaterialCompetitionSelects();
+                updateCompetitionSelects();
             } catch (error) {
                 console.error('Erro ao salvar competição:', error);
                 alert('Erro ao salvar competição. Tente novamente.');
@@ -1917,7 +1925,7 @@
                 materials = materials.filter(m => m.competitionId !== id);
                 
                 await saveData();
-                updateMaterialCompetitionSelects();
+                updateCompetitionSelects();
             } catch (error) {
                 console.error('Erro ao excluir competição:', error);
                 alert('Erro ao excluir competição. Tente novamente.');
@@ -1926,16 +1934,23 @@
             }
         }
 
-        // Modal de Material (CORRIGIDO)
+        // Modal de Material
         function openMaterialModal() {
             if (!isLoggedIn) {
                 alert('Você precisa estar logado!');
                 return;
             }
+            
+            // Verificar se existem competições
+            if (competitions.length === 0) {
+                alert('Você precisa cadastrar uma competição primeiro!');
+                return;
+            }
+            
             editingMaterialId = null;
             document.getElementById('material-modal-title').textContent = 'Adicionar Material de Apoio';
             document.getElementById('material-id').value = '';
-            document.getElementById('material-competition').value = '';
+            document.getElementById('material-competition-select').value = '';
             document.getElementById('material-title').value = '';
             document.getElementById('material-description').value = '';
             document.getElementById('material-type').value = 'pdf';
@@ -1955,7 +1970,7 @@
                 return;
             }
 
-            const competitionId = document.getElementById('material-competition').value;
+            const competitionId = document.getElementById('material-competition-select').value;
 
             if (!competitionId) {
                 alert('Selecione uma competição!');
@@ -1964,7 +1979,7 @@
 
             const materialData = {
                 id: editingMaterialId || Date.now().toString(),
-                competition_id: competitionId, // Nome da coluna no Supabase
+                competition_id: competitionId,
                 title: document.getElementById('material-title').value,
                 description: document.getElementById('material-description').value,
                 type: document.getElementById('material-type').value,
@@ -1984,7 +1999,6 @@
 
                     const index = materials.findIndex(m => m.id === editingMaterialId);
                     if (index !== -1) {
-                        // Converter para o formato do cache
                         materials[index] = {
                             ...materialData,
                             competitionId: materialData.competition_id
@@ -1997,7 +2011,6 @@
 
                     if (error) throw error;
 
-                    // Adicionar ao cache no formato correto
                     materials.push({
                         ...materialData,
                         competitionId: materialData.competition_id
@@ -2020,7 +2033,7 @@
                 editingMaterialId = id;
                 document.getElementById('material-modal-title').textContent = 'Editar Material de Apoio';
                 document.getElementById('material-id').value = material.id;
-                document.getElementById('material-competition').value = material.competitionId;
+                document.getElementById('material-competition-select').value = material.competitionId;
                 document.getElementById('material-title').value = material.title;
                 document.getElementById('material-description').value = material.description;
                 document.getElementById('material-type').value = material.type;
@@ -2057,16 +2070,23 @@
             }
         }
 
-        // Modal de Equipe (CORRIGIDO)
+        // Modal de Equipe
         function openTeamModal() {
             if (!isLoggedIn) {
                 alert('Você precisa estar logado!');
                 return;
             }
+            
+            // Verificar se existem competições
+            if (competitions.length === 0) {
+                alert('Você precisa cadastrar uma competição primeiro!');
+                return;
+            }
+            
             editingTeamId = null;
             document.getElementById('team-modal-title').textContent = 'Adicionar Equipe';
             document.getElementById('team-id').value = '';
-            document.getElementById('team-competition').value = '';
+            document.getElementById('team-competition-select').value = '';
             document.getElementById('team-name').value = '';
             document.getElementById('team-project').value = '';
             document.getElementById('team-status').value = 'inscrita';
@@ -2094,7 +2114,7 @@
 
             const membersText = document.getElementById('team-members').value;
             const membersArray = membersText ? membersText.split('\n').filter(m => m.trim() !== '') : [];
-            const competitionId = document.getElementById('team-competition').value;
+            const competitionId = document.getElementById('team-competition-select').value;
 
             if (!competitionId) {
                 alert('Selecione uma competição!');
@@ -2103,7 +2123,7 @@
 
             const teamData = {
                 id: editingTeamId || Date.now().toString(),
-                competition_id: competitionId, // Nome da coluna no Supabase
+                competition_id: competitionId,
                 team_name: document.getElementById('team-name').value,
                 project_name: document.getElementById('team-project').value,
                 status: document.getElementById('team-status').value,
@@ -2129,7 +2149,6 @@
 
                     const index = teams.findIndex(t => t.id === editingTeamId);
                     if (index !== -1) {
-                        // Converter para o formato do cache
                         teams[index] = {
                             ...teamData,
                             competitionId: teamData.competition_id,
@@ -2146,7 +2165,6 @@
 
                     if (error) throw error;
 
-                    // Adicionar ao cache no formato correto
                     teams.push({
                         ...teamData,
                         competitionId: teamData.competition_id,
@@ -2173,7 +2191,7 @@
                 editingTeamId = id;
                 document.getElementById('team-modal-title').textContent = 'Editar Equipe';
                 document.getElementById('team-id').value = team.id;
-                document.getElementById('team-competition').value = team.competitionId;
+                document.getElementById('team-competition-select').value = team.competitionId;
                 document.getElementById('team-name').value = team.teamName;
                 document.getElementById('team-project').value = team.projectName;
                 document.getElementById('team-status').value = team.status;
