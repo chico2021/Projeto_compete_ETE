@@ -1166,7 +1166,7 @@
             updateUIForLogin();
         }
 
-        // Funções de filtro - CORRIGIDAS
+        // Funções de filtro
         function filterSelection(c, event) {
             var x, i;
             x = document.getElementsByClassName("column");
@@ -1230,6 +1230,7 @@
                 
                 if (teamsError) throw teamsError;
                 teams = teamsData || [];
+                console.log('Equipes carregadas:', teams);
 
                 // Carregar materiais
                 const { data: materialsData, error: materialsError } = await supabase
@@ -1302,7 +1303,7 @@
             }
         }
 
-        // Renderizar portfólio
+        // Renderizar portfólio - CORRIGIDO
         function renderPortfolio() {
             const row = document.getElementById('portfolio-row');
             
@@ -1321,29 +1322,29 @@
                 });
             });
 
-            // Adicionar equipes
+            // Adicionar equipes - CORRIGIDO
             teams.forEach(team => {
-                const competition = competitions.find(c => c.id === team.competitionId);
+                const competition = competitions.find(c => c.id === team.competition_id);
                 items.push({
                     type: 'team',
                     id: team.id,
-                    teamName: team.teamName,
-                    projectName: team.projectName,
-                    status: team.status,
-                    advisor: team.advisor,
-                    image: team.image,
+                    teamName: team.team_name || 'Nome não informado',
+                    projectName: team.project_name || 'Projeto não informado',
+                    status: team.status || 'inscrita',
+                    advisor: team.advisor || 'Não informado',
+                    image: team.image || null,
                     competition: competition,
-                    members: team.members,
-                    year: team.year,
-                    class: team.class,
-                    videoUrl: team.videoUrl,
-                    projectUrl: team.projectUrl
+                    members: team.members || [],
+                    year: team.year || '2024',
+                    class: team.class || 'Não informada',
+                    videoUrl: team.video_url || null,
+                    projectUrl: team.project_url || null
                 });
             });
 
             // Adicionar materiais de apoio
             materials.forEach(material => {
-                const competition = competitions.find(c => c.id === material.competitionId);
+                const competition = competitions.find(c => c.id === material.competition_id);
                 items.push({
                     type: 'material',
                     id: material.id,
@@ -1393,19 +1394,21 @@
                         'venceu': '🏆 Venceu'
                     };
                     
+                    const imageUrl = item.image || 'https://via.placeholder.com/300x200?text=Sem+foto';
+                    
                     return `
                         <div class="column team">
                             <div class="content">
-                                <img src="${item.image || 'https://via.placeholder.com/300x200?text=Sem+foto'}" alt="${item.teamName}" onerror="this.src='https://via.placeholder.com/300x200?text=Sem+foto'">
+                                <img src="${imageUrl}" alt="${item.teamName}" onerror="this.src='https://via.placeholder.com/300x200?text=Erro+na+imagem'">
                                 <span class="category-badge team">👥 Equipe</span>
-                                <span class="team-status ${item.status}">${statusMap[item.status]}</span>
+                                <span class="team-status ${item.status}">${statusMap[item.status] || item.status}</span>
                                 <h4>${item.teamName}</h4>
                                 <p><strong>Projeto:</strong> ${item.projectName}</p>
                                 <p><strong>Competição:</strong> ${item.competition ? item.competition.title : 'Não especificada'}</p>
-                                <p><strong>Orientador:</strong> ${item.advisor || 'Não informado'}</p>
+                                <p><strong>Orientador:</strong> ${item.advisor}</p>
                                 <div class="team-members">
                                     <strong>Integrantes:</strong>
-                                    ${item.members ? item.members.join('<br>') : 'Não informado'}
+                                    ${item.members.length > 0 ? item.members.join('<br>') : 'Não informado'}
                                 </div>
                                 <div class="portfolio-tags">
                                     <span class="tag">📅 ${item.year}</span>
@@ -1571,14 +1574,14 @@
             `).join('');
         }
 
-        // Renderizar admin - equipes
+        // Renderizar admin - equipes - CORRIGIDO
         function renderAdminTeams() {
             const list = document.getElementById('teams-list');
             const filter = document.getElementById('team-competition-filter').value;
 
             let filteredTeams = teams;
             if (filter) {
-                filteredTeams = teams.filter(t => t.competitionId === filter);
+                filteredTeams = teams.filter(t => t.competition_id === filter);
             }
 
             if (filteredTeams.length === 0) {
@@ -1592,7 +1595,7 @@
             }
 
             list.innerHTML = filteredTeams.map(team => {
-                const competition = competitions.find(c => c.id === team.competitionId);
+                const competition = competitions.find(c => c.id === team.competition_id);
                 const statusMap = {
                     'inscrita': 'Inscrita',
                     'classificada': 'Classificada',
@@ -1603,16 +1606,16 @@
                 return `
                     <div class="team-item">
                         <div class="team-info">
-                            <h3>${team.teamName}</h3>
-                            <p><strong>Projeto:</strong> ${team.projectName}</p>
+                            <h3>${team.team_name || 'Nome não informado'}</h3>
+                            <p><strong>Projeto:</strong> ${team.project_name || 'Não informado'}</p>
                             <p><strong>Competição:</strong> ${competition ? competition.title : 'Competição não encontrada'}</p>
-                            <p><strong>Status:</strong> ${statusMap[team.status]}</p>
+                            <p><strong>Status:</strong> ${statusMap[team.status] || team.status}</p>
                             <p><strong>Orientador:</strong> ${team.advisor || 'Não informado'}</p>
                             <p><strong>Integrantes:</strong> ${team.members ? team.members.join(', ') : 'Não informado'}</p>
                             <p><strong>Ano/Turma:</strong> ${team.year} - ${team.class}</p>
                             <div class="team-links-info">
-                                ${team.videoUrl ? `<a href="${team.videoUrl}" target="_blank">🎥 Vídeo</a>` : ''}
-                                ${team.projectUrl ? `<a href="${team.projectUrl}" target="_blank">📁 Projeto</a>` : ''}
+                                ${team.video_url ? `<a href="${team.video_url}" target="_blank">🎥 Vídeo</a>` : ''}
+                                ${team.project_url ? `<a href="${team.project_url}" target="_blank">📁 Projeto</a>` : ''}
                             </div>
                         </div>
                         <div class="team-actions">
@@ -1635,7 +1638,7 @@
 
             let filteredMaterials = materials;
             if (filter) {
-                filteredMaterials = materials.filter(m => m.competitionId === filter);
+                filteredMaterials = materials.filter(m => m.competition_id === filter);
             }
 
             if (filteredMaterials.length === 0) {
@@ -1657,7 +1660,7 @@
             };
 
             list.innerHTML = filteredMaterials.map(material => {
-                const competition = competitions.find(c => c.id === material.competitionId);
+                const competition = competitions.find(c => c.id === material.competition_id);
                 return `
                     <div class="material-item">
                         <div class="material-info">
@@ -1812,7 +1815,6 @@
 
             try {
                 if (editingCompetitionId) {
-                    // Atualizar competição existente
                     const { error } = await supabase
                         .from('competitions')
                         .update(competitionData)
@@ -1820,13 +1822,11 @@
 
                     if (error) throw error;
 
-                    // Atualizar cache local
                     const index = competitions.findIndex(c => c.id === editingCompetitionId);
                     if (index !== -1) {
                         competitions[index] = competitionData;
                     }
                 } else {
-                    // Inserir nova competição
                     const { error } = await supabase
                         .from('competitions')
                         .insert([competitionData]);
@@ -1837,10 +1837,7 @@
                 }
 
                 closeCompetitionModal();
-                
-                // Recarregar dados
                 await loadData();
-                
                 alert('Competição salva com sucesso!');
             } catch (error) {
                 console.error('Erro ao salvar competição:', error);
@@ -1884,8 +1881,8 @@
                 if (error) throw error;
 
                 competitions = competitions.filter(c => c.id !== id);
-                teams = teams.filter(t => t.competitionId !== id);
-                materials = materials.filter(m => m.competitionId !== id);
+                teams = teams.filter(t => t.competition_id !== id);
+                materials = materials.filter(m => m.competition_id !== id);
                 
                 await loadData();
                 alert('Competição excluída com sucesso!');
@@ -1904,7 +1901,6 @@
                 return;
             }
             
-            // Verificar se existem competições
             if (competitions.length === 0) {
                 alert('Você precisa cadastrar uma competição primeiro!');
                 return;
@@ -1962,10 +1958,7 @@
 
                     const index = materials.findIndex(m => m.id === editingMaterialId);
                     if (index !== -1) {
-                        materials[index] = {
-                            ...materialData,
-                            competitionId: materialData.competition_id
-                        };
+                        materials[index] = materialData;
                     }
                 } else {
                     const { error } = await supabase
@@ -1974,10 +1967,7 @@
 
                     if (error) throw error;
 
-                    materials.push({
-                        ...materialData,
-                        competitionId: materialData.competition_id
-                    });
+                    materials.push(materialData);
                 }
 
                 closeMaterialModal();
@@ -1997,7 +1987,7 @@
                 editingMaterialId = id;
                 document.getElementById('material-modal-title').textContent = 'Editar Material de Apoio';
                 document.getElementById('material-id').value = material.id;
-                document.getElementById('material-competition-select').value = material.competitionId;
+                document.getElementById('material-competition-select').value = material.competition_id;
                 document.getElementById('material-title').value = material.title;
                 document.getElementById('material-description').value = material.description;
                 document.getElementById('material-type').value = material.type;
@@ -2035,14 +2025,13 @@
             }
         }
 
-        // Modal de Equipe
+        // Modal de Equipe - CORRIGIDO
         function openTeamModal() {
             if (!isLoggedIn) {
                 alert('Você precisa estar logado!');
                 return;
             }
             
-            // Verificar se existem competições
             if (competitions.length === 0) {
                 alert('Você precisa cadastrar uma competição primeiro!');
                 return;
@@ -2111,33 +2100,12 @@
                         .eq('id', editingTeamId);
 
                     if (error) throw error;
-
-                    const index = teams.findIndex(t => t.id === editingTeamId);
-                    if (index !== -1) {
-                        teams[index] = {
-                            ...teamData,
-                            competitionId: teamData.competition_id,
-                            teamName: teamData.team_name,
-                            projectName: teamData.project_name,
-                            videoUrl: teamData.video_url,
-                            projectUrl: teamData.project_url
-                        };
-                    }
                 } else {
                     const { error } = await supabase
                         .from('teams')
                         .insert([teamData]);
 
                     if (error) throw error;
-
-                    teams.push({
-                        ...teamData,
-                        competitionId: teamData.competition_id,
-                        teamName: teamData.team_name,
-                        projectName: teamData.project_name,
-                        videoUrl: teamData.video_url,
-                        projectUrl: teamData.project_url
-                    });
                 }
 
                 closeTeamModal();
@@ -2157,17 +2125,17 @@
                 editingTeamId = id;
                 document.getElementById('team-modal-title').textContent = 'Editar Equipe';
                 document.getElementById('team-id').value = team.id;
-                document.getElementById('team-competition-select').value = team.competitionId;
-                document.getElementById('team-name').value = team.teamName;
-                document.getElementById('team-project').value = team.projectName;
-                document.getElementById('team-status').value = team.status;
+                document.getElementById('team-competition-select').value = team.competition_id;
+                document.getElementById('team-name').value = team.team_name || '';
+                document.getElementById('team-project').value = team.project_name || '';
+                document.getElementById('team-status').value = team.status || 'inscrita';
                 document.getElementById('team-advisor').value = team.advisor || '';
                 document.getElementById('team-image').value = team.image || '';
                 document.getElementById('team-members').value = team.members ? team.members.join('\n') : '';
-                document.getElementById('team-video-url').value = team.videoUrl || '';
-                document.getElementById('team-project-url').value = team.projectUrl || '';
-                document.getElementById('team-year').value = team.year;
-                document.getElementById('team-class').value = team.class;
+                document.getElementById('team-video-url').value = team.video_url || '';
+                document.getElementById('team-project-url').value = team.project_url || '';
+                document.getElementById('team-year').value = team.year || '2024';
+                document.getElementById('team-class').value = team.class || '';
                 document.getElementById('team-modal').classList.add('active');
             }
         }
@@ -2177,9 +2145,6 @@
                 alert('Você precisa estar logado!');
                 return;
             }
-
-            const team = teams.find(t => t.id === id);
-            if (!team) return;
 
             if (!confirm('Tem certeza que deseja excluir esta equipe?')) return;
 
@@ -2193,7 +2158,6 @@
 
                 if (error) throw error;
 
-                teams = teams.filter(t => t.id !== id);
                 await loadData();
                 alert('Equipe excluída com sucesso!');
             } catch (error) {
