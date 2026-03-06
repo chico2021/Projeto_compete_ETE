@@ -1532,7 +1532,7 @@
             }
         }
 
-        // Atualizar selects de competição - CORRIGIDO
+        // Atualizar selects de competição
         function updateCompetitionSelects() {
             const teamSelect = document.getElementById('team-competition');
             if (teamSelect) {
@@ -1547,7 +1547,7 @@
             }
         }
 
-        // NOVO: Atualizar selects de competição para materiais - CORRIGIDO
+        // NOVO: Atualizar selects de competição para materiais
         function updateMaterialCompetitionSelects() {
             const materialSelect = document.getElementById('material-competition');
             if (materialSelect) {
@@ -1567,7 +1567,7 @@
             renderAdminTeams();
         }
 
-        // NOVO: Filtrar materiais por competição
+        // Filtrar materiais por competição
         function filterMaterialsByCompetition() {
             renderAdminMaterials();
         }
@@ -1606,7 +1606,7 @@
             `).join('');
         }
 
-        // Renderizar admin - equipes
+        // Renderizar admin - equipes (CORRIGIDO)
         function renderAdminTeams() {
             const list = document.getElementById('teams-list');
             const filter = document.getElementById('team-competition-filter').value;
@@ -1663,7 +1663,7 @@
             }).join('');
         }
 
-        // NOVO: Renderizar admin - materiais
+        // Renderizar admin - materiais (CORRIGIDO)
         function renderAdminMaterials() {
             const list = document.getElementById('materials-list');
             const filter = document.getElementById('material-competition-filter').value;
@@ -1870,7 +1870,7 @@
 
                 closeCompetitionModal();
                 await saveData();
-                updateMaterialCompetitionSelects(); // Atualizar selects de materiais
+                updateMaterialCompetitionSelects();
             } catch (error) {
                 console.error('Erro ao salvar competição:', error);
                 alert('Erro ao salvar competição. Tente novamente.');
@@ -1926,7 +1926,7 @@
             }
         }
 
-        // NOVO: Modal de Material
+        // Modal de Material (CORRIGIDO)
         function openMaterialModal() {
             if (!isLoggedIn) {
                 alert('Você precisa estar logado!');
@@ -1964,7 +1964,7 @@
 
             const materialData = {
                 id: editingMaterialId || Date.now().toString(),
-                competitionId: competitionId,
+                competition_id: competitionId, // Nome da coluna no Supabase
                 title: document.getElementById('material-title').value,
                 description: document.getElementById('material-description').value,
                 type: document.getElementById('material-type').value,
@@ -1984,7 +1984,11 @@
 
                     const index = materials.findIndex(m => m.id === editingMaterialId);
                     if (index !== -1) {
-                        materials[index] = materialData;
+                        // Converter para o formato do cache
+                        materials[index] = {
+                            ...materialData,
+                            competitionId: materialData.competition_id
+                        };
                     }
                 } else {
                     const { error } = await supabase
@@ -1993,7 +1997,11 @@
 
                     if (error) throw error;
 
-                    materials.push(materialData);
+                    // Adicionar ao cache no formato correto
+                    materials.push({
+                        ...materialData,
+                        competitionId: materialData.competition_id
+                    });
                 }
 
                 closeMaterialModal();
@@ -2049,7 +2057,7 @@
             }
         }
 
-        // Modal de Equipe
+        // Modal de Equipe (CORRIGIDO)
         function openTeamModal() {
             if (!isLoggedIn) {
                 alert('Você precisa estar logado!');
@@ -2095,15 +2103,15 @@
 
             const teamData = {
                 id: editingTeamId || Date.now().toString(),
-                competitionId: competitionId,
-                teamName: document.getElementById('team-name').value,
-                projectName: document.getElementById('team-project').value,
+                competition_id: competitionId, // Nome da coluna no Supabase
+                team_name: document.getElementById('team-name').value,
+                project_name: document.getElementById('team-project').value,
                 status: document.getElementById('team-status').value,
                 advisor: document.getElementById('team-advisor').value,
                 image: document.getElementById('team-image').value || null,
                 members: membersArray,
-                videoUrl: document.getElementById('team-video-url').value || null,
-                projectUrl: document.getElementById('team-project-url').value || null,
+                video_url: document.getElementById('team-video-url').value || null,
+                project_url: document.getElementById('team-project-url').value || null,
                 year: document.getElementById('team-year').value,
                 class: document.getElementById('team-class').value
             };
@@ -2121,7 +2129,15 @@
 
                     const index = teams.findIndex(t => t.id === editingTeamId);
                     if (index !== -1) {
-                        teams[index] = teamData;
+                        // Converter para o formato do cache
+                        teams[index] = {
+                            ...teamData,
+                            competitionId: teamData.competition_id,
+                            teamName: teamData.team_name,
+                            projectName: teamData.project_name,
+                            videoUrl: teamData.video_url,
+                            projectUrl: teamData.project_url
+                        };
                     }
                 } else {
                     const { error } = await supabase
@@ -2130,7 +2146,15 @@
 
                     if (error) throw error;
 
-                    teams.push(teamData);
+                    // Adicionar ao cache no formato correto
+                    teams.push({
+                        ...teamData,
+                        competitionId: teamData.competition_id,
+                        teamName: teamData.team_name,
+                        projectName: teamData.project_name,
+                        videoUrl: teamData.video_url,
+                        projectUrl: teamData.project_url
+                    });
                 }
 
                 closeTeamModal();
