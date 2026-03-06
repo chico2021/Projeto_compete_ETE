@@ -1119,6 +1119,10 @@
             const match4 = shareLink.match(/[-\w]{25,}/);
             if (match4) fileId = match4[0];
             
+            // Formato: drive.google.com/uc?export=view&id= (já convertido)
+            const match5 = shareLink.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            if (match5) fileId = match5[1];
+            
             if (fileId) {
                 const convertedUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
                 console.log('Link convertido:', convertedUrl);
@@ -1272,7 +1276,23 @@
                     .select('*');
                 
                 if (teamsError) throw teamsError;
-                teams = teamsData || [];
+                
+                // Mapear os dados do Supabase para o formato esperado pelo JavaScript
+                teams = (teamsData || []).map(team => ({
+                    id: team.id,
+                    competition_id: team.competition_id,
+                    team_name: team.team_name || '',
+                    project_name: team.project_name || '',
+                    status: team.status || 'inscrita',
+                    advisor: team.advisor || '',
+                    image: team.image || null,
+                    members: team.members || [],
+                    video_url: team.video_url || null,
+                    project_url: team.project_url || null,
+                    year: team.year || '2024',
+                    class: team.class || ''
+                }));
+                
                 console.log('Equipes carregadas:', teams);
 
                 // Carregar materiais
@@ -1365,7 +1385,7 @@
                 });
             });
 
-            // Adicionar equipes
+            // Adicionar equipes - CORRIGIDO para usar os campos mapeados
             teams.forEach(team => {
                 const competition = competitions.find(c => c.id === team.competition_id);
                 items.push({
@@ -1443,7 +1463,14 @@
                     };
                     
                     // URL da imagem com fallback para placehold.co
-                    const imageUrl = item.image || 'https://placehold.co/300x200/28a745/white?text=Equipe';
+                    // Garantir que a imagem seja processada corretamente
+                    let imageUrl = item.image;
+                    if (imageUrl) {
+                        // Se já não foi processada, processa agora
+                        imageUrl = getGoogleDriveImageUrl(imageUrl);
+                    } else {
+                        imageUrl = 'https://placehold.co/300x200/28a745/white?text=Equipe';
+                    }
                     
                     return `
                         <div class="column team">
@@ -1625,7 +1652,7 @@
             `).join('');
         }
 
-        // Renderizar admin - equipes
+        // Renderizar admin - equipes - CORRIGIDO
         function renderAdminTeams() {
             const list = document.getElementById('teams-list');
             const filter = document.getElementById('team-competition-filter').value;
@@ -2076,7 +2103,7 @@
             }
         }
 
-        // Modal de Equipe
+        // Modal de Equipe - CORRIGIDO
         function openTeamModal() {
             if (!isLoggedIn) {
                 alert('Você precisa estar logado!');
@@ -2144,6 +2171,8 @@
                 year: document.getElementById('team-year').value,
                 class: document.getElementById('team-class').value
             };
+
+            console.log('Enviando dados da equipe:', teamData);
 
             showLoading();
 
