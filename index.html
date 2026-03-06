@@ -949,7 +949,7 @@
         </div>
     </div>
 
-    <!-- NOVO Modal para Material de Apoio -->
+    <!-- NOVO Modal para Material de Apoio - CORRIGIDO -->
     <div id="material-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -964,6 +964,7 @@
                     <label for="material-competition">Competição Relacionada</label>
                     <select id="material-competition" required>
                         <option value="">Selecione uma competição</option>
+                        <!-- As opções serão preenchidas via JavaScript -->
                     </select>
                 </div>
 
@@ -1093,12 +1094,12 @@
         // Dados locais (apenas para cache)
         let competitions = [];
         let teams = [];
-        let materials = []; // NOVO
+        let materials = [];
         let formsUrl = '';
 
         let editingCompetitionId = null;
         let editingTeamId = null;
-        let editingMaterialId = null; // NOVO
+        let editingMaterialId = null;
         let isLoggedIn = false;
 
         // Verificar login (usando sessionStorage apenas para manter a sessão)
@@ -1228,7 +1229,7 @@
                 if (teamsError) throw teamsError;
                 teams = teamsData || [];
 
-                // NOVO: Carregar materiais
+                // Carregar materiais
                 const { data: materialsData, error: materialsError } = await supabase
                     .from('materials')
                     .select('*');
@@ -1296,10 +1297,10 @@
                 renderPortfolio();
                 renderAdminCompetitions();
                 renderAdminTeams();
-                renderAdminMaterials(); // NOVO
+                renderAdminMaterials();
                 renderAdminForms();
                 updateCompetitionSelects();
-                updateMaterialCompetitionSelects(); // NOVO
+                updateMaterialCompetitionSelects();
             }
         }
 
@@ -1311,9 +1312,9 @@
                 renderPortfolio();
                 renderAdminCompetitions();
                 renderAdminTeams();
-                renderAdminMaterials(); // NOVO
+                renderAdminMaterials();
                 updateCompetitionSelects();
-                updateMaterialCompetitionSelects(); // NOVO
+                updateMaterialCompetitionSelects();
             } finally {
                 hideLoading();
             }
@@ -1347,7 +1348,7 @@
             }
         }
 
-        // Renderizar portfólio - ATUALIZADO para incluir materiais
+        // Renderizar portfólio
         function renderPortfolio() {
             const row = document.getElementById('portfolio-row');
             
@@ -1386,7 +1387,7 @@
                 });
             });
 
-            // Adicionar materiais de apoio (como itens separados ou vinculados)
+            // Adicionar materiais de apoio
             materials.forEach(material => {
                 const competition = competitions.find(c => c.id === material.competitionId);
                 items.push({
@@ -1531,11 +1532,11 @@
             }
         }
 
-        // Atualizar selects de competição
+        // Atualizar selects de competição - CORRIGIDO
         function updateCompetitionSelects() {
-            const select = document.getElementById('team-competition');
-            if (select) {
-                select.innerHTML = '<option value="">Selecione uma competição</option>' +
+            const teamSelect = document.getElementById('team-competition');
+            if (teamSelect) {
+                teamSelect.innerHTML = '<option value="">Selecione uma competição</option>' +
                     competitions.map(comp => `<option value="${comp.id}">${comp.title}</option>`).join('');
             }
 
@@ -1546,11 +1547,11 @@
             }
         }
 
-        // NOVO: Atualizar selects de competição para materiais
+        // NOVO: Atualizar selects de competição para materiais - CORRIGIDO
         function updateMaterialCompetitionSelects() {
-            const select = document.getElementById('material-competition');
-            if (select) {
-                select.innerHTML = '<option value="">Selecione uma competição</option>' +
+            const materialSelect = document.getElementById('material-competition');
+            if (materialSelect) {
+                materialSelect.innerHTML = '<option value="">Selecione uma competição</option>' +
                     competitions.map(comp => `<option value="${comp.id}">${comp.title}</option>`).join('');
             }
 
