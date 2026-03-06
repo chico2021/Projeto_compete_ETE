@@ -1094,40 +1094,7 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkcm9zaXhlY25sbmFwb2trcW9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3Mzk4OTksImV4cCI6MjA4ODMxNTg5OX0.Si9KYWpEJ-ojuCeaOYJEVodoDNb3H2fVSb2kauw0JEw';
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ===== FUNÇÃO PARA CONVERTER LINK DO GOOGLE DRIVE =====
-        function getGoogleDriveImageUrl(shareLink) {
-            if (!shareLink) return shareLink;
-            
-            console.log('Processando link:', shareLink);
-            
-            // Tenta extrair o ID do Google Drive em diferentes formatos
-            let fileId = null;
-            
-            // Formato: /file/d/ID/view
-            const match1 = shareLink.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-            if (match1) fileId = match1[1];
-            
-            // Formato: id=ID
-            const match2 = shareLink.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-            if (match2) fileId = match2[1];
-            
-            // Formato: /open?id=ID
-            const match3 = shareLink.match(/\/open\?id=([a-zA-Z0-9_-]+)/);
-            if (match3) fileId = match3[1];
-            
-            // Formato: IDs puros (25+ caracteres)
-            const match4 = shareLink.match(/[-\w]{25,}/);
-            if (match4) fileId = match4[0];
-            
-            if (fileId) {
-                const convertedUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
-                console.log('Link convertido:', convertedUrl);
-                return convertedUrl;
-            }
-            
-            return shareLink;
-        }
-        // ===== FIM DA FUNÇÃO =====
+       
 
         // Credenciais de admin
         const ADMIN_EMAIL = 'afsantos837@gmail.com';
