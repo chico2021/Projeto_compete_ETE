@@ -785,9 +785,9 @@
                 
                 <!-- Filter Buttons -->
                 <div id="myBtnContainer">
-                    <button class="btn active" onclick="filterSelection('all')">Mostrar Tudo</button>
-                    <button class="btn" onclick="filterSelection('competition')">Competições & Projetos</button>
-                    <button class="btn" onclick="filterSelection('team')">Times</button>
+                    <button class="btn active" onclick="filterSelection('all', event)">Mostrar Tudo</button>
+                    <button class="btn" onclick="filterSelection('competition', event)">Competições & Projetos</button>
+                    <button class="btn" onclick="filterSelection('team', event)">Times</button>
                     <a href="#" id="forms-link" class="btn-forms" target="_blank" style="display: none;">
                         <span>📝</span> Inscrever Projeto
                     </a>
@@ -1166,8 +1166,8 @@
             updateUIForLogin();
         }
 
-        // Funções de filtro
-        function filterSelection(c) {
+        // Funções de filtro - CORRIGIDAS
+        function filterSelection(c, event) {
             var x, i;
             x = document.getElementsByClassName("column");
             if (c == "all") c = "";
@@ -1181,7 +1181,9 @@
             for (i = 0; i < btns.length; i++) {
                 btns[i].classList.remove("active");
             }
-            event.target.classList.add("active");
+            if (event && event.target) {
+                event.target.classList.add("active");
+            }
         }
 
         function w3AddClass(element, name) {
@@ -1265,7 +1267,6 @@
 
         // Salvar dados no Supabase
         async function saveData() {
-            // Não precisamos fazer nada aqui além de recarregar a interface
             renderPortfolio();
             renderAdminCompetitions();
             renderAdminTeams();
@@ -1446,8 +1447,8 @@
                 }
             }).join('');
 
-            // Aplicar filtro inicial
-            filterSelection('all');
+            // Aplicar filtro inicial sem evento
+            filterSelection('all', null);
         }
 
         // Mostrar página
@@ -1769,7 +1770,7 @@
             }
         }
 
-        // Modal de Competição - CORRIGIDO
+        // Modal de Competição
         function openCompetitionModal() {
             if (!isLoggedIn) {
                 alert('Você precisa estar logado!');
@@ -1980,7 +1981,7 @@
                 }
 
                 closeMaterialModal();
-                await saveData();
+                await loadData();
                 alert('Material salvo com sucesso!');
             } catch (error) {
                 console.error('Erro ao salvar material:', error);
@@ -2024,7 +2025,7 @@
                 if (error) throw error;
 
                 materials = materials.filter(m => m.id !== id);
-                await saveData();
+                await loadData();
                 alert('Material excluído com sucesso!');
             } catch (error) {
                 console.error('Erro ao excluir material:', error);
@@ -2140,7 +2141,7 @@
                 }
 
                 closeTeamModal();
-                await saveData();
+                await loadData();
                 alert('Equipe salva com sucesso!');
             } catch (error) {
                 console.error('Erro ao salvar equipe:', error);
@@ -2193,7 +2194,7 @@
                 if (error) throw error;
 
                 teams = teams.filter(t => t.id !== id);
-                await saveData();
+                await loadData();
                 alert('Equipe excluída com sucesso!');
             } catch (error) {
                 console.error('Erro ao excluir equipe:', error);
