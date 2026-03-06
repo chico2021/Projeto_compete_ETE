@@ -1219,6 +1219,7 @@
                 
                 if (compError) throw compError;
                 competitions = compData || [];
+                console.log('Competições carregadas:', competitions);
 
                 // Carregar equipes
                 const { data: teamsData, error: teamsError } = await supabase
@@ -1250,47 +1251,7 @@
                 
             } catch (error) {
                 console.error('Erro ao carregar dados:', error);
-                alert('Erro ao carregar dados do servidor. Usando dados locais.');
-                
-                // Fallback para dados iniciais
-                competitions = [
-                    {
-                        id: '1',
-                        title: 'Google Code Jam',
-                        description: 'Uma das competições de programação mais prestigiadas do mundo.',
-                        image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=300',
-                        link: 'https://codingcompetitions.withgoogle.com/codejam',
-                        status: 'aberta'
-                    }
-                ];
-                
-                teams = [
-                    {
-                        id: '1',
-                        competitionId: '1',
-                        teamName: 'Tech Warriors',
-                        projectName: 'Solução de IA para Código',
-                        status: 'classificada',
-                        advisor: 'Prof. Carlos Silva',
-                        image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=300',
-                        members: ['Ana Silva', 'Carlos Santos', 'Mariana Oliveira'],
-                        videoUrl: 'https://youtube.com/watch?v=exemplo',
-                        projectUrl: 'https://github.com/exemplo/projeto',
-                        year: '2024',
-                        class: '3° Ano A'
-                    }
-                ];
-
-                materials = [
-                    {
-                        id: '1',
-                        competitionId: '1',
-                        title: 'Guia Completo - Google Code Jam',
-                        description: 'Material com dicas e estratégias para participar do Google Code Jam',
-                        type: 'pdf',
-                        url: 'https://example.com/guia-codejam.pdf'
-                    }
-                ];
+                alert('Erro ao carregar dados do servidor: ' + error.message);
             } finally {
                 hideLoading();
                 renderPortfolio();
@@ -1304,17 +1265,12 @@
 
         // Salvar dados no Supabase
         async function saveData() {
-            showLoading();
-            
-            try {
-                renderPortfolio();
-                renderAdminCompetitions();
-                renderAdminTeams();
-                renderAdminMaterials();
-                updateCompetitionSelects();
-            } finally {
-                hideLoading();
-            }
+            // Não precisamos fazer nada aqui além de recarregar a interface
+            renderPortfolio();
+            renderAdminCompetitions();
+            renderAdminTeams();
+            renderAdminMaterials();
+            updateCompetitionSelects();
         }
 
         // Funções auxiliares de loading
@@ -1529,7 +1485,7 @@
             }
         }
 
-        // Atualizar selects de competição - CORRIGIDO
+        // Atualizar selects de competição
         function updateCompetitionSelects() {
             console.log('Atualizando selects... Competições:', competitions);
             
@@ -1813,7 +1769,7 @@
             }
         }
 
-        // Modal de Competição
+        // Modal de Competição - CORRIGIDO
         function openCompetitionModal() {
             if (!isLoggedIn) {
                 alert('Você precisa estar logado!');
@@ -1855,6 +1811,7 @@
 
             try {
                 if (editingCompetitionId) {
+                    // Atualizar competição existente
                     const { error } = await supabase
                         .from('competitions')
                         .update(competitionData)
@@ -1862,14 +1819,16 @@
 
                     if (error) throw error;
 
+                    // Atualizar cache local
                     const index = competitions.findIndex(c => c.id === editingCompetitionId);
                     if (index !== -1) {
                         competitions[index] = competitionData;
                     }
                 } else {
+                    // Inserir nova competição
                     const { error } = await supabase
                         .from('competitions')
-                        .insert(competitionData);
+                        .insert([competitionData]);
 
                     if (error) throw error;
 
@@ -1877,11 +1836,14 @@
                 }
 
                 closeCompetitionModal();
-                await saveData();
-                updateCompetitionSelects();
+                
+                // Recarregar dados
+                await loadData();
+                
+                alert('Competição salva com sucesso!');
             } catch (error) {
                 console.error('Erro ao salvar competição:', error);
-                alert('Erro ao salvar competição. Tente novamente.');
+                alert('Erro ao salvar competição: ' + error.message);
             } finally {
                 hideLoading();
             }
@@ -1924,11 +1886,11 @@
                 teams = teams.filter(t => t.competitionId !== id);
                 materials = materials.filter(m => m.competitionId !== id);
                 
-                await saveData();
-                updateCompetitionSelects();
+                await loadData();
+                alert('Competição excluída com sucesso!');
             } catch (error) {
                 console.error('Erro ao excluir competição:', error);
-                alert('Erro ao excluir competição. Tente novamente.');
+                alert('Erro ao excluir competição: ' + error.message);
             } finally {
                 hideLoading();
             }
@@ -2007,7 +1969,7 @@
                 } else {
                     const { error } = await supabase
                         .from('materials')
-                        .insert(materialData);
+                        .insert([materialData]);
 
                     if (error) throw error;
 
@@ -2019,9 +1981,10 @@
 
                 closeMaterialModal();
                 await saveData();
+                alert('Material salvo com sucesso!');
             } catch (error) {
                 console.error('Erro ao salvar material:', error);
-                alert('Erro ao salvar material. Tente novamente.');
+                alert('Erro ao salvar material: ' + error.message);
             } finally {
                 hideLoading();
             }
@@ -2062,9 +2025,10 @@
 
                 materials = materials.filter(m => m.id !== id);
                 await saveData();
+                alert('Material excluído com sucesso!');
             } catch (error) {
                 console.error('Erro ao excluir material:', error);
-                alert('Erro ao excluir material. Tente novamente.');
+                alert('Erro ao excluir material: ' + error.message);
             } finally {
                 hideLoading();
             }
@@ -2161,7 +2125,7 @@
                 } else {
                     const { error } = await supabase
                         .from('teams')
-                        .insert(teamData);
+                        .insert([teamData]);
 
                     if (error) throw error;
 
@@ -2177,9 +2141,10 @@
 
                 closeTeamModal();
                 await saveData();
+                alert('Equipe salva com sucesso!');
             } catch (error) {
                 console.error('Erro ao salvar equipe:', error);
-                alert('Erro ao salvar equipe. Tente novamente.');
+                alert('Erro ao salvar equipe: ' + error.message);
             } finally {
                 hideLoading();
             }
@@ -2229,9 +2194,10 @@
 
                 teams = teams.filter(t => t.id !== id);
                 await saveData();
+                alert('Equipe excluída com sucesso!');
             } catch (error) {
                 console.error('Erro ao excluir equipe:', error);
-                alert('Erro ao excluir equipe. Tente novamente.');
+                alert('Erro ao excluir equipe: ' + error.message);
             } finally {
                 hideLoading();
             }
