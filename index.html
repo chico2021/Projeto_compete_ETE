@@ -1443,7 +1443,18 @@
                     };
                     
                     // URL da imagem com fallback para placehold.co
-                    const imageUrl = item.image || 'https://placehold.co/300x200/28a745/white?text=Equipe';
+                  //  const imageUrl = item.image || 'https://placehold.co/300x200/28a745/white?text=Equipe';
+
+                    let imageUrl = item.image;
+if (imageUrl) {
+    // Verifica se é uma URL válida (começa com http ou https)
+    if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+        console.log('URL inválida, usando placeholder');
+        imageUrl = 'https://placehold.co/300x200/28a745/white?text=Equipe';
+    }
+} else {
+    imageUrl = 'https://placehold.co/300x200/28a745/white?text=Equipe';
+}
                     
                     return `
                         <div class="column team">
