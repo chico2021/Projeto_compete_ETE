@@ -580,11 +580,18 @@
             margin: 2rem 0;
         }
 
-        .forms-preview iframe {
-            width: 100%;
-            height: 500px;
-            border: none;
-            border-radius: 8px;
+        .forms-preview a {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .forms-preview a:hover {
+            background: #764ba2;
         }
 
         .page {
@@ -865,10 +872,11 @@
                         <div id="forms-loading" class="spinner"></div>
                         <div id="forms-list" class="forms-list"></div>
                         
-                        <!-- Preview do Forms -->
+                        <!-- Preview do Forms - CORRIGIDO (sem iframe) -->
                         <div id="forms-preview" class="forms-preview" style="display: none;">
-                            <h3>Prévia do Forms</h3>
-                            <iframe id="forms-preview-iframe" src=""></iframe>
+                            <h3>Link do Forms</h3>
+                            <p>O formulário será aberto em uma nova aba.</p>
+                            <a href="#" id="forms-preview-link" target="_blank">Abrir Google Forms</a>
                         </div>
                     </div>
                 </div>
@@ -1085,46 +1093,42 @@
         const SUPABASE_URL = 'https://rdrosixecnlnapokkqos.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkcm9zaXhlY25sbmFwb2trcW9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3Mzk4OTksImV4cCI6MjA4ODMxNTg5OX0.Si9KYWpEJ-ojuCeaOYJEVodoDNb3H2fVSb2kauw0JEw';
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-// ===== FUNÇÃO PARA CONVERTER LINK DO GOOGLE DRIVE =====
-    function getGoogleDriveImageUrl(shareLink) {
-        if (!shareLink) return shareLink;
-        
-        console.log('Processando link:', shareLink); // Para debug
-        
-        // Tenta extrair o ID do Google Drive em diferentes formatos
-        let fileId = null;
-        
-        // Formato: /file/d/ID/view
-        const match1 = shareLink.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-        if (match1) fileId = match1[1];
-        
-        // Formato: id=ID
-        const match2 = shareLink.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-        if (match2) fileId = match2[1];
-        
-        // Formato: /open?id=ID
-        const match3 = shareLink.match(/\/open\?id=([a-zA-Z0-9_-]+)/);
-        if (match3) fileId = match3[1];
-        
-        // Formato: IDs puros (25+ caracteres)
-        const match4 = shareLink.match(/[-\w]{25,}/);
-        if (match4) fileId = match4[0];
-        
-        // Formato: /uc?id=ID (já convertido)
-        const match5 = shareLink.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-        if (match5) fileId = match5[1];
-        
-        if (fileId) {
-            const convertedUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
-            console.log('Link convertido:', convertedUrl); // Para debug
-            return convertedUrl;
-        }
-        
-        return shareLink;
-    }
-    // ===== FIM DA FUNÇÃO =====
 
-        
+        // ===== FUNÇÃO PARA CONVERTER LINK DO GOOGLE DRIVE =====
+        function getGoogleDriveImageUrl(shareLink) {
+            if (!shareLink) return shareLink;
+            
+            console.log('Processando link:', shareLink);
+            
+            // Tenta extrair o ID do Google Drive em diferentes formatos
+            let fileId = null;
+            
+            // Formato: /file/d/ID/view
+            const match1 = shareLink.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+            if (match1) fileId = match1[1];
+            
+            // Formato: id=ID
+            const match2 = shareLink.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            if (match2) fileId = match2[1];
+            
+            // Formato: /open?id=ID
+            const match3 = shareLink.match(/\/open\?id=([a-zA-Z0-9_-]+)/);
+            if (match3) fileId = match3[1];
+            
+            // Formato: IDs puros (25+ caracteres)
+            const match4 = shareLink.match(/[-\w]{25,}/);
+            if (match4) fileId = match4[0];
+            
+            if (fileId) {
+                const convertedUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+                console.log('Link convertido:', convertedUrl);
+                return convertedUrl;
+            }
+            
+            return shareLink;
+        }
+        // ===== FIM DA FUNÇÃO =====
+
         // Credenciais de admin
         const ADMIN_EMAIL = 'afsantos837@gmail.com';
         const ADMIN_PASSWORD = 'Ch@Verde26';
@@ -1342,7 +1346,7 @@
             }
         }
 
-        // Renderizar portfólio - CORRIGIDO
+        // Renderizar portfólio - CORRIGIDO com placehold.co
         function renderPortfolio() {
             const row = document.getElementById('portfolio-row');
             
@@ -1361,7 +1365,7 @@
                 });
             });
 
-            // Adicionar equipes - CORRIGIDO
+            // Adicionar equipes
             teams.forEach(team => {
                 const competition = competitions.find(c => c.id === team.competition_id);
                 items.push({
@@ -1410,10 +1414,15 @@
                     const statusClass = item.status === 'aberta' ? 'aberta' : 'fechada';
                     const statusText = item.status === 'aberta' ? '✅ Aberta' : '🔒 Fechada';
                     
+                    // URL da imagem com fallback para placehold.co
+                    const imageUrl = item.image || 'https://placehold.co/300x200/667eea/white?text=Competição';
+                    
                     return `
                         <div class="column competition">
                             <div class="content">
-                                <img src="${item.image}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/300x200?text=Imagem+não+disponível'">
+                                <img src="${imageUrl}" 
+                                     alt="${item.title}" 
+                                     onerror="this.onerror=null; this.src='https://placehold.co/300x200/dc3545/white?text=Erro'">
                                 <span class="category-badge competition">🏆 Competição</span>
                                 <span class="status-badge ${statusClass}">${statusText}</span>
                                 <h4>${item.title}</h4>
@@ -1433,14 +1442,15 @@
                         'venceu': '🏆 Venceu'
                     };
                     
-                    const imageUrl = item.image || 'https://via.placeholder.com/300x200?text=Sem+foto';
+                    // URL da imagem com fallback para placehold.co
+                    const imageUrl = item.image || 'https://placehold.co/300x200/28a745/white?text=Equipe';
                     
                     return `
                         <div class="column team">
                             <div class="content">
-                               <img src="${imageUrl}" 
-     alt="${item.teamName}" 
-     onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=Erro+na+imagem'; console.log('Erro ao carregar imagem:', this.src)">
+                                <img src="${imageUrl}" 
+                                     alt="${item.teamName}" 
+                                     onerror="this.onerror=null; this.src='https://placehold.co/300x200/dc3545/white?text=Erro'">
                                 <span class="category-badge team">👥 Equipe</span>
                                 <span class="team-status ${item.status}">${statusMap[item.status] || item.status}</span>
                                 <h4>${item.teamName}</h4>
@@ -1615,7 +1625,7 @@
             `).join('');
         }
 
-        // Renderizar admin - equipes - CORRIGIDO
+        // Renderizar admin - equipes
         function renderAdminTeams() {
             const list = document.getElementById('teams-list');
             const filter = document.getElementById('team-competition-filter').value;
@@ -1724,17 +1734,17 @@
             }).join('');
         }
 
-        // Renderizar admin - forms
+        // Renderizar admin - forms (CORRIGIDO - sem iframe)
         function renderAdminForms() {
             const list = document.getElementById('forms-list');
             const preview = document.getElementById('forms-preview');
-            const previewIframe = document.getElementById('forms-preview-iframe');
+            const previewLink = document.getElementById('forms-preview-link');
 
             document.getElementById('forms-url').value = formsUrl;
 
             if (formsUrl) {
                 preview.style.display = 'block';
-                previewIframe.src = formsUrl;
+                previewLink.href = formsUrl;
                 
                 list.innerHTML = `
                     <div class="form-item">
@@ -2066,7 +2076,7 @@
             }
         }
 
-        // Modal de Equipe - CORRIGIDO
+        // Modal de Equipe
         function openTeamModal() {
             if (!isLoggedIn) {
                 alert('Você precisa estar logado!');
@@ -2116,6 +2126,10 @@
                 return;
             }
 
+            // PEGA A URL DA IMAGEM E CONVERTE SE FOR DO GOOGLE DRIVE
+            const imageUrl = document.getElementById('team-image').value;
+            const processedImageUrl = getGoogleDriveImageUrl(imageUrl);
+
             const teamData = {
                 id: editingTeamId || Date.now().toString(),
                 competition_id: competitionId,
@@ -2123,8 +2137,7 @@
                 project_name: document.getElementById('team-project').value,
                 status: document.getElementById('team-status').value,
                 advisor: document.getElementById('team-advisor').value,
-               // image: document.getElementById('team-image').value || null,
-                image: getGoogleDriveImageUrl(document.getElementById('team-image').value) || null,
+                image: processedImageUrl || null,
                 members: membersArray,
                 video_url: document.getElementById('team-video-url').value || null,
                 project_url: document.getElementById('team-project-url').value || null,
