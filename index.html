@@ -1375,7 +1375,7 @@
                     projectName: team.project_name || 'Projeto não informado',
                     status: team.status || 'inscrita',
                     advisor: team.advisor || 'Não informado',
-                    image: team.image || null,
+                  image: team.image || team.image_url || null,
                     competition: competition,
                     members: team.members || [],
                     year: team.year || '2024',
