@@ -1411,7 +1411,7 @@
                     
                     // URL da imagem com fallback para placehold.co
                   //  const imageUrl = item.image || 'https://placehold.co/300x200/28a745/white?text=Equipe';
-
+/*
                     let imageUrl = item.image;
 if (imageUrl) {
     // Verifica se é uma URL válida (começa com http ou https)
@@ -1422,6 +1422,16 @@ if (imageUrl) {
 } else {
     imageUrl = 'https://placehold.co/300x200/28a745/white?text=Equipe';
 }
+                    
+  */
+                   let imageUrl = item.image;
+if (imageUrl) {
+    // Aceita qualquer URL que não seja vazia (removeu a validação http)
+    console.log('Usando imagem:', imageUrl);
+} else {
+    console.log('Sem imagem, usando placeholder');
+    imageUrl = 'https://placehold.co/300x200/28a745/white?text=Equipe';
+} 
                     
                     return `
                         <div class="column team">
